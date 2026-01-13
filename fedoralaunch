@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-source "${SCRIPT_DIR}/lib/utils.sh"
+source "./lib/utils.sh"
 
 # ---
 # ## Global Variables
