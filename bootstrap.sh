@@ -68,7 +68,7 @@ check_dependencies() {
 backup_file() {
     if [ -f "$1" ]; then
         log_info "Backing up file: $1"
-        cp "$1" "/tmp/$1.bak"
+        cp "$1" "/tmp/$(basename "$1").bak"
     fi
 }
 
@@ -76,7 +76,7 @@ restore_file() {
     if [ -f "$1" ]; then
         log_info "Restoring file: $1"
         rm -f "$1"
-        cp "/tmp/$1.bak" "$1" 
+        cp "/tmp/$(basename "$1").bak" "$1" 
     fi
 }
 
