@@ -10,11 +10,17 @@ source "${SCRIPT_DIR}/lib/utils.sh"
 system_base_main() {
     print_header "System Base Configuration"
 
+    log_section "System init configuration"
+    sudo systemctl disable NetworkManager-wait-online.service
+    sudo rm -rf /etc/xdg/autostart/org.gnome.Software.desktop || true
+    sudo rm -rf /etc/yum.repos.d/{_copr:copr.fedorainfracloud.org:phracek:PyCharm.repo,rpmfusion-nonfree-nvidia-driver.repo,rpmfusion-nonfree-steam.repo}
+    log_section "System init configuration applied."
+
     log_section "Update System"
-    sudo dnf -y update
-    sudo dnf upgrade --refresh -y
-    sudo dnf group upgrade core -y --with-optional --skip-broken
-    sudo dnf4 group install core -y --with-optional --skip-broken
+    sudo dnf -y update --refresh 
+    sudo dnf upgrade -y
+    sudo dnf group upgrade core -y
+    sudo dnf4 group install core -y
     log_success "System updated."
 
     log_section "Installing essential dependencies..."
@@ -81,12 +87,6 @@ system_base_main() {
     log_section "Configuring Journal Max Size"
     sudo sed -i "s/#SystemMaxUse=/SystemMaxUse=${FEDORALAUNCH_JOURNAL_MAX_SIZE}/" /etc/systemd/journald.conf
     log_success "Journal max size configured to ${FEDORALAUNCH_JOURNAL_MAX_SIZE}."
-
-    log_section "System Tweaks"
-    sudo systemctl disable NetworkManager-wait-online.service
-    sudo rm -rf /etc/xdg/autostart/org.gnome.Software.desktop || true
-    sudo rm -rf /etc/yum.repos.d/{_copr:copr.fedorainfracloud.org:phracek:PyCharm.repo,rpmfusion-nonfree-nvidia-driver.repo,rpmfusion-nonfree-steam.repo}
-    log_section "System tweaks applied."
 
     print_success "System Base Configuration Completed"
 }
