@@ -83,10 +83,10 @@ restore_file() {
 clone_repository() {
     if [ -d "$INSTALL_DIR" ]; then
         log_info "fedoralaunch is already installed. To update run: fedoralaunch self-update..."
-        backup_file "$SCRIPT_DIR"
-        git -C "$SCRIPT_DIR" fetch --all > /dev/null
-        git -C "$SCRIPT_DIR" reset --hard @{u} > /dev/null
-        restore_file "$SCRIPT_DIR"
+        backup_file "$INSTALL_DIR"
+        git -C "$INSTALL_DIR" fetch --all > /dev/null
+        git -C "$INSTALL_DIR" reset --hard @{u} > /dev/null
+        restore_file "$INSTALL_DIR"
         log_success "fedoralaunch updated successfully."
     else
         log_info "Cloning fedoralaunch repository..."
