@@ -66,6 +66,7 @@ check_dependencies() {
 }
 
 backup_file() {
+    log_info "Creating backup file..."
     if [ -f "$1" ]; then
         log_info "Backing up file: $1"
         cp "$1" "/tmp/$(basename "$1").bak"
@@ -73,6 +74,7 @@ backup_file() {
 }
 
 restore_file() {
+    log_info "Restoring backup file..."
     if [ -f "$1" ]; then
         log_info "Restoring file: $1"
         rm -f "$1"
@@ -84,6 +86,7 @@ clone_repository() {
     if [ -d "$INSTALL_DIR" ]; then
         log_info "fedoralaunch is already installed. To update run: fedoralaunch self-update..."
         backup_file "$INSTALL_DIR/config/.env"
+        git log -1 --decorate --pretty=format:"%h %d | %s | %an | %ad"
         git -C "$INSTALL_DIR" fetch --all > /dev/null
         git -C "$INSTALL_DIR" reset --hard @{u} > /dev/null
         restore_file "$INSTALL_DIR/config/.env"
