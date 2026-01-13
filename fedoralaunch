@@ -1,0 +1,252 @@
+#!/usr/bin/env bash
+#
+# fedoralaunch - Modular and intelligent post-install for Fedora Workstation
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/utils.sh"
+
+# ---
+# ## Global Variables
+# ---
+FEDORALAUNCH_VERSION=$(cat "${SCRIPT_DIR}/version")
+MODULES_DIR="${SCRIPT_DIR}/modules"
+
+# ---
+# ## Functions
+# ---
+
+show_help() {
+    echo "Fedora Launch v${FEDORALAUNCH_VERSION} — Post-install setup for Fedora 43+ made easy!"
+    echo "...by the community, for the community!"
+    echo
+    echo "Usage: fedoralaunch [command]"
+    echo
+    echo "Commands:"
+    echo "  list                     List available modules"
+    echo "  status                   View status"
+    echo "  install [all|<module>]   Install a new module or run an existing one"
+    echo "  config                   Edit configuration"
+    echo "  self-update              Update fedoralaunch"
+    echo "  self-uninstall           Uninstall fedoralaunch"
+    echo "  doctor                   Check the system for common problems"
+    echo "  search <term>            Search for a module by name or description"
+    echo "  log                      View the log file"
+    echo "  version                  View the version of fedoralaunch"
+    echo "  help                     Show this help message"
+    echo
+}
+
+list_modules() {
+    print_header "Available Modules"
+    
+    find "${MODULES_DIR}" -maxdepth 1 -type f -name "*.sh" | while read -r module; do
+        priority=$(grep -m 1 "^# Priority:" "$module" | cut -d: -f2- | xargs)
+        echo "$priority:$module"
+    done | sort -n | while IFS=: read -r priority module; do
+        module_name=$(basename "$module" .sh)
+        description=$(grep -m 1 "^# Description:" "$module" | cut -d: -f2- | xargs)
+        echo -e "  [${priority}] ${COLOR_GREEN}${module_name}${COLOR_RESET} - ${description}"
+    done
+}
+
+run_module() {
+    local module_name="$1"
+    local module_file="${MODULES_DIR}/${module_name}.sh"
+
+    if [ ! -f "$module_file" ]; then
+        log_error "Module '${module_name}' not found."
+        exit 1
+    fi
+
+    local module_func
+    module_func="${module_name//-/_}_main"
+
+    log_info "Running module: ${module_name}"
+    source "$module_file"
+    "$module_func"
+    log_success "Module '${module_name}' executed successfully."
+}
+
+install_all_modules() {
+    print_header "Installing All Modules"
+    
+    find "${MODULES_DIR}" -maxdepth 1 -type f -name "*.sh" | while read -r module; do
+        priority=$(grep -m 1 "^# Priority:" "$module" | cut -d: -f2- | xargs)
+        echo "$priority:$module"
+    done | sort -n | while IFS=: read -r priority module; do
+        module_name=$(basename "$module" .sh)
+        run_module "$module_name"
+    done
+    
+    print_success "All modules installed successfully."
+}
+
+edit_config() {
+    if [ -n "${EDITOR}" ]; then
+        "$EDITOR" "$CONFIG_FILE"
+    else
+        nano "$CONFIG_FILE"
+    fi
+}
+
+self_update() {
+    print_header "Self-updating fedoralaunch"
+    backup_file "$CONFIG_FILE"
+    git -C "$SCRIPT_DIR" fetch --all
+    git -C "$SCRIPT_DIR" reset --hard @{u}
+    log_success "fedoralaunch updated successfully."
+}
+
+uninstall() {
+    print_header "Uninstalling fedoralaunch"
+    log_info "Removing fedoralaunch files..."
+    rm -rf "$HOME/.local/share/fedoralaunch"
+    rm -f "$HOME/.local/bin/fedoralaunch"
+    log_success "fedoralaunch uninstalled successfully."
+}
+
+show_status() {
+    print_header "fedoralaunch Status"
+    log_info "Version: ${FEDORALAUNCH_VERSION}"
+    log_info "Installation directory: ${SCRIPT_DIR}"
+    log_info "Configuration file: ${CONFIG_FILE}"
+    log_info "Log file: ${LOG_FILE}"
+}
+
+run_version() {
+    print_header "fedoralaunch Version"
+    log_info "Version: ${FEDORALAUNCH_VERSION}"
+}
+
+run_log() {
+    less "${LOG_FILE}"
+}
+
+run_search() {
+    local search_term="$1"
+    print_header "Search results for: ${search_term}"
+    
+    find "${MODULES_DIR}" -maxdepth 1 -type f -name "*.sh" | while read -r module; do
+        priority=$(grep -m 1 "^# Priority:" "$module" | cut -d: -f2- | xargs)
+        module_name=$(basename "$module" .sh)
+        description=$(grep -m 1 "^# Description:" "$module" | cut -d: -f2- | xargs)
+        
+        if [[ "$module_name" == *"$search_term"* ]] || [[ "$description" == *"$search_term"* ]]; then
+            echo -e "  [${priority}] ${COLOR_GREEN}${module_name}${COLOR_RESET} - ${description}"
+        fi
+    done
+}
+
+run_doctor() {
+    print_header "System Doctor"
+
+    log_section "Checking Fedora Version"
+    local current_version=$(rpm -E %fedora)
+    local latest_version=$(curl -s "https://getfedora.org/releases.json" | jq -r '.[].version')
+    if [ "$current_version" -lt "$latest_version" ]; then
+        log_warning "Your system is running an outdated version of Fedora."
+        log_info "Consider upgrading to the latest version for the best experience."
+    else
+        log_success "Your system is running the latest version of Fedora."
+    fi
+
+
+    log_section "Checking Disk Space"
+    local free_space=$(df -h / | awk 'NR==2 {print $4}')
+    log_info "Free disk space: ${free_space}"
+
+    log_section "Checking Memory"
+    local free_mem=$(free -h | awk 'NR==2 {print $7}')
+    log_info "Free memory: ${free_mem}"
+
+    log_section "Checking for Broken Packages"
+    local broken_packages=$(sudo dnf check | grep "broken")
+    if [ -n "$broken_packages" ]; then
+        log_warning "Your system has broken packages."
+        log_info "Run 'sudo dnf check' for more information."
+    else
+        log_success "No broken packages found."
+    fi
+
+    print_success "System check complete."
+}
+
+# ---
+# ## Main Execution
+# ---
+
+main() {
+    init_logging
+    load_config
+
+    if [ $# -eq 0 ]; then
+        show_banner
+        show_help
+        exit 0
+    fi
+
+    local command="$1"
+    shift
+
+    case "$command" in
+        list)
+            list_modules
+            ;;
+        status)
+            show_status
+            ;;
+        install)
+            show_banner
+            if [ "$1" = "all" ]; then
+                install_all_modules
+            elif [ -n "$1" ]; then
+                run_module "$1"
+            else
+                log_error "Please specify a module to install or 'all'.\n"
+                show_help
+            fi
+            ;;
+        config)
+            edit_config
+            ;;
+        self-update)
+            show_banner
+            self_update
+            ;;
+        self-uninstall)
+            uninstall
+            ;;
+        doctor)
+            run_doctor
+            ;;
+        search)
+            if [ -n "$1" ]; then
+                run_search "$1"
+            else
+                log_error "Please specify a search term.\n"
+                show_help
+            fi
+            ;;
+        log)
+            run_log
+            ;;
+        version)
+            run_version
+            ;;
+        help|--help|-h)
+            show_help
+            ;;
+        *)
+            log_error "Unknown command: $command"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main "$@"
+fi
