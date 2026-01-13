@@ -100,6 +100,12 @@ main() {
     setup_path
     create_symlink
 
+    # Appply permissions
+    chmod +x \
+        "$INSTALL_DIR/fedoralaunch" \
+        "$INSTALL_DIR/modules"/* \
+        "$INSTALL_DIR/lib"/*
+
     log_success "fedoralaunch installed successfully!"
     echo
     log_info "Please run 'source ~/.bashrc' or open a new terminal to use the 'fedoralaunch' command."
