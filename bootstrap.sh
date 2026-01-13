@@ -90,7 +90,7 @@ clone_repository() {
         git -C "$INSTALL_DIR" fetch --all > /dev/null
         git -C "$INSTALL_DIR" reset --hard @{u} > /dev/null
         restore_file "$INSTALL_DIR/config/.env"
-        log_success "fedoralaunch updated successfully."
+        log_success "fedoralaunch self updated."
     else
         log_info "Cloning fedoralaunch repository..."
         git clone "$REPO_URL" "$INSTALL_DIR"
