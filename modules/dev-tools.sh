@@ -16,6 +16,7 @@ dev_tools_main() {
 
     log_section "Installing Git"
     dnf_install git git-lfs git-delta git-subtree hexedit meld
+    git config --global credential.helper 'cache --timeout=14400000'
     log_success "Git installed."
 
     log_section "Installing SDKMAN"

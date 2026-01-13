@@ -85,8 +85,12 @@ clone_repository() {
         log_info "fedoralaunch is already installed. Next time, run: fedoralaunch self-update..."
         log_info "Force self update..."
         backup_file "$INSTALL_DIR/config/.env"
-        git -C "$INSTALL_DIR" fetch --all > /dev/null
-        git -C "$INSTALL_DIR" reset --hard @{u} > /dev/null
+
+        git config --global credential.helper 'cache --timeout=3600'
+        git -C "$INSTALL_DIR" fetch --all
+        git -C "$INSTALL_DIR" reset --hard origin/main
+        git -C "$INSTALL_DIR" pull origin main
+
         restore_file "$INSTALL_DIR/config/.env"
         log_success "fedoralaunch self updated."
     else
@@ -120,11 +124,10 @@ main() {
     setup_path
     create_symlink
 
+    # Make scripts executable
+    find "$INSTALL_DIR" -name "*.sh" -exec chmod +x {} \;
     # Appply permissions
-    chmod +x \
-        "$INSTALL_DIR/fedoralaunch" \
-        "$INSTALL_DIR/modules"/* \
-        "$INSTALL_DIR/lib"/*
+    chmod +x "$INSTALL_DIR/fedoralaunch"
 
     log_success "fedoralaunch installed successfully!"
     echo
