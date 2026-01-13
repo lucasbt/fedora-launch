@@ -86,7 +86,7 @@ clone_repository() {
     if [ -d "$INSTALL_DIR" ]; then
         log_info "fedoralaunch is already installed. To update run: fedoralaunch self-update..."
         backup_file "$INSTALL_DIR/config/.env"
-        git log -1 --decorate --pretty=format:"%h %d | %s | %an | %ad"
+        git -C "$INSTALL_DIR" log -1 --decorate --pretty=format:"%h %d | %s | %an | %ad"
         git -C "$INSTALL_DIR" fetch --all > /dev/null
         git -C "$INSTALL_DIR" reset --hard @{u} > /dev/null
         restore_file "$INSTALL_DIR/config/.env"
