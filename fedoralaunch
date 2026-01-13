@@ -96,6 +96,7 @@ self_update() {
     backup_file "$CONFIG_FILE"
     git -C "$SCRIPT_DIR" fetch --all > /dev/null
     git -C "$SCRIPT_DIR" reset --hard @{u} > /dev/null
+    restore_file "$CONFIG_FILE"
     log_success "fedoralaunch updated successfully."
 }
 
