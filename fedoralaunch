@@ -94,8 +94,8 @@ edit_config() {
 self_update() {
     print_header "Self-updating fedoralaunch"
     backup_file "$CONFIG_FILE"
-    git -C "$SCRIPT_DIR" fetch --all
-    git -C "$SCRIPT_DIR" reset --hard @{u}
+    git -C "$SCRIPT_DIR" fetch --all > /dev/null
+    git -C "$SCRIPT_DIR" reset --hard @{u} > /dev/null
     log_success "fedoralaunch updated successfully."
 }
 

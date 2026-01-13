@@ -68,7 +68,9 @@ check_dependencies() {
 clone_repository() {
     if [ -d "$INSTALL_DIR" ]; then
         log_info "fedoralaunch is already installed. To update run: fedoralaunch self-update..."
-        git -C "$INSTALL_DIR" pull
+        git -C "$SCRIPT_DIR" fetch --all > /dev/null
+        git -C "$SCRIPT_DIR" reset --hard @{u} > /dev/null
+        log_success "fedoralaunch updated successfully."
     else
         log_info "Cloning fedoralaunch repository..."
         git clone "$REPO_URL" "$INSTALL_DIR"
