@@ -78,7 +78,6 @@ show_banner() {
                                                     
 EOF
     echo -e "${COLOR_RESET}"
-    echo -e "${COLOR_CYAN}Post-install setup for Fedora 43+ made easy!${COLOR_RESET}\n"
 }
 
 # ---
