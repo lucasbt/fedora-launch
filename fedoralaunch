@@ -5,7 +5,9 @@
 
 set -euo pipefail
 
-source "./lib/utils.sh"
+export SCRIPT_DIR="$HOME/.local/share/fedoralaunch"
+
+source "$SCRIPT_DIR/lib/utils.sh"
 
 # ---
 # ## Global Variables

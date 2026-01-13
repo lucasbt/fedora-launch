@@ -8,8 +8,6 @@
 # ---
 # ## Variables
 # ---
-export SCRIPT_DIR="$HOME/.local/share/fedoralaunch"
-
 CONFIG_FILE="${SCRIPT_DIR}/config/.env"
 LOG_DIR="$HOME/.local/cache/fedoralaunch"
 LOG_FILE="${LOG_DIR}/fedoralaunch.log"
