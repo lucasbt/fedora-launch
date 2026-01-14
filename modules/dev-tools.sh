@@ -124,16 +124,16 @@ dev_tools_main() {
     fi
 
     log_section "Installing IntelliJ IDEA"
-    local intellij_url=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release" | jq -r '.IIC[0].downloads.linux.link')
-    if [ -n "$intellij_url" ]; then
-        log_info "Downloading IntelliJ IDEA from $intellij_url..."
-        curl -L "$intellij_url" -o /tmp/intellij.tar.gz
-        sudo rm -rf /opt/intellij
-        sudo mkdir -p /opt/intellij
-        sudo tar -xzf /tmp/intellij.tar.gz -C /opt/intellij --strip-components=1
-        rm /tmp/intellij.tar.gz
-        
-        echo "[Desktop Entry]
+    if [ ! -d "/opt/intellij" ]; then
+        local intellij_url=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release" | jq -r '.IIC[0].downloads.linux.link')
+        if [ -n "$intellij_url" ]; then
+            log_info "Downloading IntelliJ IDEA from $intellij_url..."
+            curl -L "$intellij_url" -o /tmp/intellij.tar.gz
+            sudo rm -rf /opt/intellij
+            sudo mkdir -p /opt/intellij
+            sudo tar -xzf /tmp/intellij.tar.gz -C /opt/intellij --strip-components=1
+            rm /tmp/intellij.tar.gz            
+            echo "[Desktop Entry]
 Name=IntelliJ IDEA Community
 Comment=The Drive to Develop
 Exec=/opt/intellij/bin/idea.sh
@@ -142,22 +142,26 @@ Terminal=false
 Type=Application
 Categories=Development;IDE;
 StartupWMClass=jetbrains-idea" | sudo tee /usr/share/applications/intellij-idea.desktop > /dev/null
-        log_success "IntelliJ IDEA installed."
+            log_success "IntelliJ IDEA installed."
+        else
+            log_error "Could not find IntelliJ IDEA download URL."
+        fi
     else
-        log_error "Could not find IntelliJ IDEA download URL."
+        log_info "Intellij IDEA is already installed."
     fi
 
     log_section "Installing Spring Tool Suite (STS)"
-    local sts_url=$(curl -s https://spring.io/tools | grep -o 'https://[^"]*linux.gtk.x86_64.tar.gz' | head -1)
-    if [ -n "$sts_url" ]; then
-        log_info "Downloading STS from $sts_url..."
-        curl -L "$sts_url" -o /tmp/sts.tar.gz
-        sudo rm -rf /opt/sts
-        sudo mkdir -p /opt/sts
-        sudo tar -xzf /tmp/sts.tar.gz -C /opt/sts --strip-components=1
-        rm /tmp/sts.tar.gz
+    if [ ! -d "/opt/sts" ]; then
+        local sts_url=$(curl -s https://spring.io/tools | grep -o 'https://[^"]*linux.gtk.x86_64.tar.gz' | head -1)
+        if [ -n "$sts_url" ]; then
+            log_info "Downloading STS from $sts_url..."
+            curl -L "$sts_url" -o /tmp/sts.tar.gz
+            sudo rm -rf /opt/sts
+            sudo mkdir -p /opt/sts
+            sudo tar -xzf /tmp/sts.tar.gz -C /opt/sts --strip-components=1
+            rm /tmp/sts.tar.gz
 
-        echo "[Desktop Entry]
+            echo "[Desktop Entry]
 Name=Spring Tool Suite 4
 Comment=Spring Boot IDE
 Exec=/opt/sts/SpringToolSuite4
@@ -166,9 +170,13 @@ Terminal=false
 Type=Application
 Categories=Development;IDE;Java;
 StartupWMClass=SpringToolSuite4" | sudo tee /usr/share/applications/sts4.desktop > /dev/null
-        log_success "Spring Tool Suite installed."
+            log_success "Spring Tool Suite installed."
+        else
+            log_error "Could not find STS download URL."
+        fi
     else
-        log_error "Could not find STS download URL."
+        log_info "STS is already installed."
+
     fi
 
     log_section "Installing Microsoft Visual Studio Code"
@@ -206,30 +214,48 @@ EOF
     log_success "Other Programming Languages installed."
 
     log_section "Installing Cloud Tools"
-    log_info "Installing kubectl..."
-    local kubectl_url=$(curl -s "https://storage.googleapis.com/kubernetes-release/release/stable.txt" | xargs -I {} curl -s "https://storage.googleapis.com/kubernetes-release/release/{}/bin/linux/amd64/kubectl" -o /tmp/kubectl)
-    sudo install /tmp/kubectl /usr/local/bin/kubectl
-    rm /tmp/kubectl
-    log_success "kubectl installed."
-
-    log_info "Installing Minikube..."
-    local minikube_url=$(curl -s "https://api.github.com/repos/kubernetes/minikube/releases/latest" | grep -o '"browser_download_url": "[^"]*minikube-linux-amd64"' | cut -d'"' -f4)
-    if [ -n "$minikube_url" ]; then
-        curl -L "$minikube_url" -o /tmp/minikube
-        sudo install /tmp/minikube /usr/local/bin/minikube
-        rm /tmp/minikube
-        log_success "Minikube installed."
+    # Instalar kubectl se não existir
+    if ! command -v kubectl &> /dev/null; then
+        log_info "Installing kubectl..."
+        local kubectl_url=$(curl -s "https://storage.googleapis.com/kubernetes-release/release/stable.txt")
+        curl -LO "https://storage.googleapis.com/kubernetes-release/release/${kubectl_url}/bin/linux/amd64/kubectl" -o /tmp/kubectl
+        sudo install /tmp/kubectl /usr/local/bin/kubectl
+        rm /tmp/kubectl
+        log_success "kubectl installed."
     else
-        log_error "Could not find Minikube download URL."
+        log_info "kubectl is already installed."
     fi
 
-    log_info "Installing AWS CLI..."
-    local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
-    curl "$aws_cli_url" -o "/tmp/awscliv2.zip"
-    unzip -o /tmp/awscliv2.zip -d /tmp
-    sudo /tmp/aws/install
-    rm -rf /tmp/aws /tmp/awscliv2.zip
-    log_success "AWS CLI installed."
+    # Instalar Minikube se não existir
+    if ! command -v minikube &> /dev/null; then
+        log_info "Installing Minikube..."
+        local minikube_url=$(curl -s "https://api.github.com/repos/kubernetes/minikube/releases/latest" \
+            | grep -o '"browser_download_url": "[^"]*minikube-linux-amd64"' | cut -d'"' -f4)
+        if [ -n "$minikube_url" ]; then
+            curl -L "$minikube_url" -o /tmp/minikube
+            sudo install /tmp/minikube /usr/local/bin/minikube
+            rm /tmp/minikube
+            log_success "Minikube installed."
+        else
+            log_error "Could not find Minikube download URL."
+        fi
+    else
+        log_info "Minikube is already installed."
+    fi
+
+    # Instalar AWS CLI se não existir
+    if ! command -v aws &> /dev/null; then
+        log_info "Installing AWS CLI..."
+        local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+        curl "$aws_cli_url" -o "/tmp/awscliv2.zip"
+        unzip -o /tmp/awscliv2.zip -d /tmp
+        sudo /tmp/aws/install
+        rm -rf /tmp/aws /tmp/awscliv2.zip
+        log_success "AWS CLI installed."
+    else
+        log_info "AWS CLI is already installed."
+    fi
+
     log_success "Cloud tools installed."
 
     print_footer "Development Tools Installation Completed"
