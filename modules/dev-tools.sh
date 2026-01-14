@@ -22,7 +22,9 @@ dev_tools_main() {
     log_section "Installing SDKMAN"
     if [ ! -d "$HOME/.sdkman" ]; then
         curl -s "https://get.sdkman.io" | bash
+        set +u
         source "$HOME/.sdkman/bin/sdkman-init.sh"
+        set -u
         log_success "SDKMAN installed."
     else
         log_info "SDKMAN is already installed."
