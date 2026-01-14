@@ -110,6 +110,7 @@ dev_tools_main() {
         source "$HOME/.cargo/env"
     fi
 
+    source "$HOME/.cargo/env"
     if [ -n "$FEDORALAUNCH_RUST_VERSION" ]; then
         log_info "Installing Rust ${FEDORALAUNCH_RUST_VERSION}..."
         rustup install "${FEDORALAUNCH_RUST_VERSION}"
