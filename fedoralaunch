@@ -150,7 +150,7 @@ run_doctor() {
 
     log_section "Checking Fedora Version"
     local current_version=$(rpm -E %fedora)
-    local latest_version=$(curl -s "https://getfedora.org/releases.json" | jq -r '.[].version')
+    local latest_version=$(curl -sL "https://fedoraproject.org/releases.json" | jq -r '.[0].version')
     if [ "$current_version" -lt "$latest_version" ]; then
         log_warning "Your system is running an outdated version of Fedora."
         log_info "Consider upgrading to the latest version for the best experience."
