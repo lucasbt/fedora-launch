@@ -244,8 +244,13 @@ export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_CTRL_T_COMMAND=\"\$FZF_DEFAULT_COMMAND\"
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 
-# load fzf only when pressing CTRL+T or first fzf command
-zle -N fzf-file-widget fzf_lazy
+__fzf_lazy_load() {
+  unbind '"\C-t"' '"\C-r"' 2>/dev/null
+  source /usr/share/fzf/key-bindings.bash
+}
+
+bind -x '"\C-t":__fzf_lazy_load'
+bind -x '"\C-r":__fzf_lazy_load'
 
 # Set up fzf key bindings and fuzzy completion"
 
