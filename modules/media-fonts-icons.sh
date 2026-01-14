@@ -42,7 +42,7 @@ media_fonts_icons_main() {
     log_section "Installing Fonts"
     
     # Repository fonts & tools
-    dnf_install fira-code-fonts jetbrains-mono-fonts rsms-inter-fonts google-roboto-fonts \
+    dnf_install xorg-x11-font-utils fira-code-fonts jetbrains-mono-fonts rsms-inter-fonts google-roboto-fonts \
         google-noto-sans-fonts liberation-fonts dejavu-sans-fonts unzip curl cabextract fontconfig
 
     # Microsoft Fonts (Core Fonts)
