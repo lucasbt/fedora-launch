@@ -51,7 +51,7 @@ media_fonts_icons_main() {
         local ms_fonts_rpm="/tmp/msttcore-fonts-installer.rpm"
         curl -L "https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm" -o "$ms_fonts_rpm"
         # We use || true to not break the script if sourceforge is down/slow
-        sudo rpm -i "$ms_fonts_rpm" || log_warning "Microsoft fonts installation failed (SourceForge issue)."
+        dnf_install --nogpgcheck "$ms_fonts_rpm" || log_warning "Microsoft fonts installation failed (SourceForge issue)."
         rm -f "$ms_fonts_rpm"
     else
         log_info "Microsoft Core Fonts already installed."
