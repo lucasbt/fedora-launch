@@ -80,10 +80,11 @@ system_base_main() {
     log_success "Dirty page ratios configured."
     
     log_section "Configuring I/O Scheduler"
-    echo "ACTION==\"add|change\", KERNEL==\"sd[a-z]\", ATTR{queue/scheduler}=\" ${FEDORALAUNCH_IO_SCHEDULER}\"" | sudo tee /etc/udev/rules.d/60-ioscheduler.rules
+    echo "ACTION==\"add|change\", KERNEL==\"sd[a-z]\", ATTR{queue/scheduler}=\"${FEDORALAUNCH_IO_SCHEDULER}\"" | sudo tee /etc/udev/rules.d/60-ioscheduler.rules
     log_success "I/O scheduler configured to ${FEDORALAUNCH_IO_SCHEDULER}."
     
     log_section "Configuring Journal Max Size"
+    sudo touch /etc/systemd/journald.conf
     sudo sed -i "s/#SystemMaxUse=/SystemMaxUse=${FEDORALAUNCH_JOURNAL_MAX_SIZE}/" /etc/systemd/journald.conf
     log_success "Journal max size configured to ${FEDORALAUNCH_JOURNAL_MAX_SIZE}."
 
