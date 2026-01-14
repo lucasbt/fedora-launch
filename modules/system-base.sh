@@ -49,8 +49,8 @@ system_base_main() {
     fi
 
     log_section "Configuring Flathub repository"
-    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-    flatpak update -y
+    sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    sudo flatpak update -y
     log_success "Flathub repository configured."
 
     log_section "Installing Proprietary Firmware"

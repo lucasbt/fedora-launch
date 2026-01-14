@@ -235,7 +235,7 @@ EOF
     log_success "Docker installed and configured."
 
     log_section "Installing Modern CLI Tools"
-    dnf_install btop neovim vim-enhanced wget perf htop iotop 
+    dnf_install btop vim-enhanced wget perf htop iotop 
     log_success "Modern CLI tools installed."
 
     log_section "Installing Other Programming Languages"

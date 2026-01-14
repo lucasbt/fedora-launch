@@ -26,7 +26,7 @@ apply_filesystem_tweaks() {
     sudo rm -f /usr/share/localsearch3/extract-rules/* || true
     systemctl --user stop localsearch-3.service
     systemctl --user mask localsearch-3.service
-    gs_set org.gnome.desktop.search-providers disabled ['org.gnome.Nautilus.desktop', 'org.gnome.Boxes.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Characters.desktop', 'org.mozilla.firefox.desktop', 'org.gnome.Software.desktop']
+    gs_set org.gnome.desktop.search-providers disabled "['/org/gnome/Nautilus.desktop', '/org/gnome/Boxes.desktop', '/org/gnome/Calendar.desktop', '/org/gnome/Characters.desktop', '/org/mozilla/firefox.desktop', '/org/gnome/Software.desktop']"
 
 }
 
