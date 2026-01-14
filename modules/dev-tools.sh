@@ -222,8 +222,8 @@ EOF
     # Instalar kubectl se não existir
     if ! command -v kubectl &> /dev/null; then
         log_info "Installing kubectl..."
-        local kubectl_url=$(curl -s "https://storage.googleapis.com/kubernetes-release/release/stable.txt")
-        curl -LO "https://storage.googleapis.com/kubernetes-release/release/${kubectl_url}/bin/linux/amd64/kubectl" -o /tmp/kubectl
+        local kubectl_version=$(curl -s "https://storage.googleapis.com/kubernetes-release/release/stable.txt")
+        curl -L "https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/amd64/kubectl" -o /tmp/kubectl
         sudo install /tmp/kubectl /usr/local/bin/kubectl
         rm /tmp/kubectl
         log_success "kubectl installed."
