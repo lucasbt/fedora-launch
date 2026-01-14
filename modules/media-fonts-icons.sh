@@ -62,7 +62,7 @@ media_fonts_icons_main() {
     log_section "Installing Icon Themes"
     
     # Repository icons
-    dnf_install papirus-icon-theme libreoffice-icon-theme-papirus flat-remix-icon-theme
+    dnf_install papirus-icon-theme libreoffice-icon-theme-papirus paper-icon-theme numix-icon-theme-square material-icons-fonts
 
     # Tela Icons (from source)
     if [ ! -d "$HOME/.local/share/icons/Tela" ]; then
