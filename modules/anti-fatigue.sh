@@ -29,7 +29,7 @@ anti_fatigue_main() {
     gs_set org.gnome.desktop.interface enable-animations "${FEDORALAUNCH_GNOME_ENABLE_ANIMATIONS}"
     log_success "Animations disabled."
 
-    print_success "Anti-Fatigue Settings Completed"
+    print_footer "Anti-Fatigue Settings Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

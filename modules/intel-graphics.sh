@@ -36,7 +36,7 @@ intel_graphics_main() {
         log_info "No VA-API driver name specified. Skipping."
     fi
 
-    print_success "Intel Graphics Configuration Completed"
+    print_footer "Intel Graphics Configuration Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

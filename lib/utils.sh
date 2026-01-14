@@ -55,6 +55,11 @@ print_header() {
     echo -e "\n${COLOR_CYAN}🔨 $1${COLOR_RESET}\n"
 }
 
+print_footer() {
+    echo -e "\n${COLOR_GREEN}✅ $1${COLOR_RESET}\n"
+}
+
+
 log_section() {
     echo -e "\n${COLOR_YELLOW}--- $1 ---${COLOR_RESET}"
 }

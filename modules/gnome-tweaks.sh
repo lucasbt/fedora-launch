@@ -278,7 +278,7 @@ zle -N fzf-file-widget fzf_lazy
     configure_folders_development_environment()
     setup_directory_bookmarks()
 
-    print_success "GNOME Tweaks Completed"
+    print_footer "GNOME Tweaks Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

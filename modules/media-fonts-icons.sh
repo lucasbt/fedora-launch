@@ -80,7 +80,7 @@ media_fonts_icons_main() {
 
     log_success "Icon themes installed."
 
-    print_success "Multimedia, Fonts & Icons installation completed"
+    print_footer "Multimedia, Fonts & Icons installation completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

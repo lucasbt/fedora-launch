@@ -88,7 +88,7 @@ system_base_main() {
     sudo sed -i "s/#SystemMaxUse=/SystemMaxUse=${FEDORALAUNCH_JOURNAL_MAX_SIZE}/" /etc/systemd/journald.conf
     log_success "Journal max size configured to ${FEDORALAUNCH_JOURNAL_MAX_SIZE}."
 
-    print_success "System Base Configuration Completed"
+    print_footer "System Base Configuration Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

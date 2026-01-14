@@ -68,7 +68,7 @@ run_module() {
     log_info "Running module: ${module_name}"
     source "$module_file"
     "$module_func"
-    log_success "Module '${module_name}' executed successfully."
+    print_footer "Module '${module_name}' executed."
 }
 
 install_all_modules() {
@@ -82,7 +82,7 @@ install_all_modules() {
         run_module "$module_name"
     done
     
-    print_success "All modules installed successfully."
+    print_footer "All modules installed."
 }
 
 edit_config() {
@@ -100,7 +100,7 @@ self_update() {
     git -C "$SCRIPT_DIR" reset --hard origin/main
     git -C "$SCRIPT_DIR" pull origin main
     restore_file "$CONFIG_FILE"
-    log_success "fedoralaunch updated successfully."
+    print_footer "fedoralaunch updated successfully."
 }
 
 uninstall() {
@@ -108,7 +108,7 @@ uninstall() {
     log_info "Removing fedoralaunch files..."
     rm -rf "$HOME/.local/share/fedoralaunch"
     rm -f "$HOME/.local/bin/fedoralaunch"
-    log_success "fedoralaunch uninstalled successfully."
+    print_footer "fedoralaunch uninstalled successfully."
 }
 
 show_status() {
@@ -174,7 +174,7 @@ run_doctor() {
         log_success "No broken packages found."
     fi
 
-    print_success "System check complete."
+    print_footer "System check complete."
 }
 
 # ---

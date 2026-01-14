@@ -146,7 +146,7 @@ rpm_apps_main() {
         gtk-murrine-engine gtk2-engines adw-gtk3-theme sassc glib2-devel gnome-themes-extra
     log_success "Extras RPM tools installed."
 
-    print_success "RPM Applications Installation Completed"
+    print_footer "RPM Applications Installation Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

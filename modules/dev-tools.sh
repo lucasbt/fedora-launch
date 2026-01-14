@@ -221,7 +221,7 @@ StartupWMClass=SpringToolSuite4" | sudo tee /usr/share/applications/sts4.desktop
     log_success "AWS CLI installed."
     log_success "Cloud tools installed."
 
-    print_success "Development Tools Installation Completed"
+    print_footer "Development Tools Installation Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

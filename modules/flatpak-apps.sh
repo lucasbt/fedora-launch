@@ -31,7 +31,7 @@ flatpak_apps_main() {
     sudo flatpak override --env=GTK_THEME=Adwaita:dark
     log_success "Flatpak themes configured."
 
-    print_success "Flatpak Applications Installation Completed"
+    print_footer "Flatpak Applications Installation Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
