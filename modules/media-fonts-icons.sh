@@ -56,6 +56,8 @@ media_fonts_icons_main() {
     else
         log_info "Microsoft Core Fonts already installed."
     fi
+    log_info "Updating font cache..."
+    fc-cache -f
     log_success "Fonts installed."
 
     # --- Icons ---
