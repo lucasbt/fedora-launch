@@ -18,7 +18,7 @@ media_fonts_icons_main() {
 
     # Audio/Video Codecs
     # Installing base plugins and ffmpeg-based libav
-    dnf_install gstreamer1-plugins-base gstreamer1-plugins-good \
+    dnf_install --allowerasing gstreamer1-plugins-base gstreamer1-plugins-good \
         gstreamer1-plugins-bad-free gstreamer1-plugins-ugly-free \
         gstreamer1-libav lame lame-libs ffmpeg-libs x264 x265 faac faad2 \
         libavcodec-freeworld mesa-va-drivers mesa-vdpau-drivers intel-media-driver \
