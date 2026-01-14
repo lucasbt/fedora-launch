@@ -82,6 +82,8 @@ install_all_modules() {
         run_module "$module_name"
     done
     
+    log_info "/nPlease reboot your system for all changes to take effect/n"
+    
     log_info "All modules installed."
 }
 
