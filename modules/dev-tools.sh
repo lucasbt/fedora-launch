@@ -67,7 +67,7 @@ dev_tools_main() {
     export PATH="$HOME/.pyenv/bin:$PATH"
     eval "$(pyenv init --path)"
     eval "$(pyenv init -)"
-    pyenv install "${FEDORALAUNCH_PYENV_PYTHON_VERSION}"
+    pyenv install -s "${FEDORALAUNCH_PYENV_PYTHON_VERSION}"
     pyenv global "${FEDORALAUNCH_PYENV_PYTHON_VERSION}"
     log_success "pyenv and Python installed."
 
@@ -123,7 +123,7 @@ dev_tools_main() {
     fi
 
     log_section "Installing IntelliJ IDEA"
-    local intellij_url=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release" | grep -o '"link":"[^"]*"' | head -1 | cut -d'"' -f4)
+    local intellij_url=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release" | jq -r '.IIC[0].downloads.linux.link')
     if [ -n "$intellij_url" ]; then
         log_info "Downloading IntelliJ IDEA from $intellij_url..."
         curl -L "$intellij_url" -o /tmp/intellij.tar.gz
