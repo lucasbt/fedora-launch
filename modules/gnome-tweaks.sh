@@ -184,23 +184,7 @@ gnome_tweaks_main() {
     gs_set org.gnome.nautilus.preferences show-create-link 'true'
 
     log_success "GNOME settings applied."
-
-    log_section "Set display false to gnome apps grid for some apps..." #############################
-    for file in /usr/share/applications/htop.desktop /usr/share/applications/btop.desktop; do
-        if [ -f "$file" ]; then
-            if grep -q "^NoDisplay=" "$file"; then
-                # Já existe uma linha NoDisplay, vamos alterar seu valor para true
-                sudo sed -i 's/^NoDisplay=.*/NoDisplay=true/' "$file"
-            else
-                # Adiciona NoDisplay=true logo após a linha [Desktop Entry]
-                sudo sed -i '/^\[Desktop Entry\]/a NoDisplay=true' "$file"
-            fi
-        else
-            log_info "File not found: $file"
-        fi
-    done
-    log_success "Set display false to gnome apps grid for some apps applied."
-
+    
     log_section "Enabling nano syntax highlighting..." ##############################################
 
     local nanorc_file="$HOME/.nanorc"
@@ -208,17 +192,16 @@ gnome_tweaks_main() {
 
     # Check if the include line is already present
     if grep -Fxq "$include_line" "$nanorc_file" 2>/dev/null; then
-        log_info "Syntax highlighting already enabled in $nanorc_file"
-        return 0
+        log_success "Syntax highlighting already enabled in $nanorc_file"
+    else
+        # Add the include line with a comment
+        {
+            echo ""
+            echo "# Enable syntax highlighting for all filetypes"
+            echo "$include_line"
+        } >> "$nanorc_file"
+        log_success "Nano syntax highlighting enabled in $nanorc_file"
     fi
-
-    # Add the include line with a comment
-    {
-        echo ""
-        echo "# Enable syntax highlighting for all filetypes"
-        echo "$include_line"
-    } >> "$nanorc_file"
-    log_success "Nano syntax highlighting enabled in $nanorc_file"
 
     
     # Install Starship prompt
@@ -239,7 +222,7 @@ gnome_tweaks_main() {
         echo "$STARSHIP_CMD" >> "$bashrc"  # adiciona o comando
         log_success "Starship init added in ~/.bashrc"
     else
-        log_info "Starship init already exists in ~/.bashrc"
+        log_success "Starship init already exists in ~/.bashrc"
     fi
 
     log_section "Installing Gnome Extensions" #############################################

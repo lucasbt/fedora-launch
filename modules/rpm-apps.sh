@@ -134,7 +134,7 @@ rpm_apps_main() {
     log_success "Bitwarden GUI and CLI installed."
 
     log_section "Installing extras rpm tools"
-    dnf_install htop tree rsync wget bat ripgrep fzf tmux libvirt cabextract \
+    dnf_install htop btop tree rsync wget bat ripgrep fzf tmux libvirt cabextract \
         nmap telnet whois traceroute iperf3 iotop ncdu duf lsof strace nautilus-extensions \
         zip unzip tar gzip bzip2 xz unrar p7zip p7zip-plugins jq yq sed gawk grep \
         openssl zlib readline bash-completion gnome-tweaks gnome-extensions-app exfatprogs \
@@ -145,6 +145,22 @@ rpm_apps_main() {
         httpie flatseal file-roller dconf-editor cifs-utils fuse fuse-sshfs gvfs-fuse \
         gtk-murrine-engine gtk2-engines adw-gtk3-theme sassc glib2-devel gnome-themes-extra
     log_success "Extras RPM tools installed."
+
+    log_section "Set display false to gnome apps grid for some apps..." #############################
+    for file in /usr/share/applications/htop.desktop /usr/share/applications/btop.desktop; do
+        if [ -f "$file" ]; then
+            if grep -q "^NoDisplay=" "$file"; then
+                # Já existe uma linha NoDisplay, vamos alterar seu valor para true
+                sudo sed -i 's/^NoDisplay=.*/NoDisplay=true/' "$file"
+            else
+                # Adiciona NoDisplay=true logo após a linha [Desktop Entry]
+                sudo sed -i '/^\[Desktop Entry\]/a NoDisplay=true' "$file"
+            fi
+        else
+            log_warning "File not found: $file"
+        fi
+    done
+    log_success "Set display false to gnome apps grid for some apps applied."
 
     print_footer "RPM Applications Installation Completed"
 }
