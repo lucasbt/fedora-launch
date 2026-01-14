@@ -14,7 +14,6 @@ media_fonts_icons_main() {
     log_section "Installing Multimedia Support"
     
     # OpenH264
-    sudo dnf config-manager --set-enabled fedora-cisco-openh264
     dnf_install openh264 gstreamer1-plugin-openh264 mozilla-openh264
 
     # Audio/Video Codecs
