@@ -20,11 +20,10 @@ dev_tools_main() {
     log_success "Git installed."
 
     log_section "Installing SDKMAN"
+    set +u
     if [ ! -d "$HOME/.sdkman" ]; then
         curl -s "https://get.sdkman.io" | bash
-        set +u
         source "$HOME/.sdkman/bin/sdkman-init.sh"
-        set -u
         log_success "SDKMAN installed."
     else
         log_info "SDKMAN is already installed."
@@ -48,6 +47,7 @@ dev_tools_main() {
     else
         sdk install gradle
     fi
+    set -u
     log_success "Gradle installed."
     
     log_section "Installing NVM and Node.js"
