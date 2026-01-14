@@ -146,7 +146,7 @@ gs_get() {
 
 dnf_install() {
     log_info "Installing DNF packages: $*"
-    sudo dnf install -y "$@"
+    sudo dnf install -y "$@" --setopt=install_weak_deps=False
 }
 
 flatpak_install() {
