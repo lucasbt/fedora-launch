@@ -274,9 +274,9 @@ zle -N fzf-file-widget fzf_lazy
     fi
     log_success "fzf configured"
 
-    apply_filesystem_tweaks()
-    configure_folders_development_environment()
-    setup_directory_bookmarks()
+    apply_filesystem_tweaks
+    configure_folders_development_environment
+    setup_directory_bookmarks
 
     print_footer "GNOME Tweaks Completed"
 }
