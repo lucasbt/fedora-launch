@@ -31,8 +31,8 @@ media_fonts_icons_main() {
     fi
 
     log_info "Configuring multimedia groups and swapping ffmpeg..."
-    sudo dnf4 group install multimedia -y --with-optional --skip-broken
-    sudo dnf group install -y --with-optional --skip-broken sound-and-video
+    sudo dnf4 group install multimedia -y --skip-broken
+    sudo dnf group install -y --skip-broken sound-and-video
     sudo dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing
     sudo dnf upgrade -y @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
     
