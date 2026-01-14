@@ -186,8 +186,13 @@ StartupWMClass=SpringToolSuite4" | sudo tee /usr/share/applications/sts4.desktop
     log_success "Microsoft Visual Studio Code installed."
 
     log_section "Installing Zed Editor"
-    curl -f https://zed.dev/install.sh | sh
-    log_success "Zed Editor installed."
+    if ! command -v zed &> /dev/null; then
+        log_info "Installing Zed Editor..."
+        curl -f https://zed.dev/install.sh | sh
+        log_success "Zed Editor installed."
+    else
+        log_info "Zed Editor is already installed."
+    fi
 
     log_section "Installing Docker"
     sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine
