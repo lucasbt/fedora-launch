@@ -106,13 +106,20 @@ rpm_apps_main() {
 
     log_section "Installing Google Chrome"
     sudo dnf install -y fedora-workstation-repositories
-    sudo dnf config-manager --set-enabled google-chrome
     dnf_install google-chrome-stable
     log_success "Google Chrome installed."
 
     log_section "Installing Brave Browser"
-    sudo dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.com/x86_64/
     sudo rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+    sudo tee /etc/yum.repos.d/brave-browser.repo <<EOF
+[brave-browser]
+name=Brave Browser
+baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/
+enabled=1
+gpgcheck=1
+gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+EOF
+
     dnf_install brave-browser
     log_success "Brave Browser installed."
     
