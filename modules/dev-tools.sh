@@ -253,7 +253,7 @@ EOF
         log_info "Installing AWS CLI..."
         local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
         curl "$aws_cli_url" -o "/tmp/awscliv2.zip"
-        unzip -o /tmp/awscliv2.zip -d /tmp
+        unzip -q -o /tmp/awscliv2.zip -d /tmp
         sudo /tmp/aws/install
         rm -rf /tmp/aws /tmp/awscliv2.zip
         log_success "AWS CLI installed."
