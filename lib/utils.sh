@@ -25,28 +25,28 @@ COLOR_BLUE='\033[0;34m'
 COLOR_CYAN='\033[0;36m'
 
 log_info() {
-    echo -e "${COLOR_BLUE}• $1${COLOR_RESET}"
+    echo -e "${COLOR_BLUE}•${COLOR_RESET} $1"
     echo "$(date +"%Y-%m-%d %H:%M:%S") - INFO - $1" >> "$LOG_FILE"
 }
 
 log_success() {
-    echo -e "${COLOR_GREEN}✓ $1${COLOR_RESET}"
+    echo -e "${COLOR_GREEN}✓${COLOR_RESET} $1"
     echo "$(date +"%Y-%m-%d %H:%M:%S") - SUCCESS - $1" >> "$LOG_FILE"
 }
 
 log_warning() {
-    echo -e "${COLOR_YELLOW}! $1${COLOR_RESET}"
+    echo -e "${COLOR_YELLOW}!${COLOR_RESET} $1"
     echo "$(date +"%Y-%m-%d %H:%M:%S") - WARNING - $1" >> "$LOG_FILE"
 }
 
 log_error() {
-    echo -e "${COLOR_RED}✗ $1${COLOR_RESET}" >&2
+    echo -e "${COLOR_RED}✗${COLOR_RESET} $1" >&2
     echo "$(date +"%Y-%m-%d %H:%M:%S") - ERROR - $1" >> "$LOG_FILE"
 }
 
 log_debug() {
     if [ "${FEDORALAUNCH_VERBOSE:-false}" = true ]; then
-        echo -e "${COLOR_CYAN}DEBUG: $1${COLOR_RESET}"
+        echo -e "${COLOR_CYAN}DEBUG:${COLOR_RESET} $1"
         echo "$(date +"%Y-%m-%d %H:%M:%S") - DEBUG - $1" >> "$LOG_FILE"
     fi
 }

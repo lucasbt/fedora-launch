@@ -169,7 +169,6 @@ gnome_tweaks_main() {
     gs_set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']"
 
     gs_set org.gtk.Settings.FileChooser sort-directories-first 'true'
-    gs_set org.gnome.Terminal.Legacy.Settings theme-variant 'dark'
     gs_set org.gnome.desktop.peripherals.touchpad tap-to-click 'true'
     gs_set org.gnome.desktop.peripherals.touchpad two-finger-scrolling-enabled 'true'
 
