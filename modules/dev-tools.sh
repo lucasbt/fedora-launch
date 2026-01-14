@@ -22,12 +22,13 @@ dev_tools_main() {
     log_section "Installing SDKMAN"
     set +u
     if [ ! -d "$HOME/.sdkman" ]; then
-        curl -s "https://get.sdkman.io" | bash
-        source "$HOME/.sdkman/bin/sdkman-init.sh"
+        curl -s "https://get.sdkman.io" | bash        
         log_success "SDKMAN installed."
     else
         log_info "SDKMAN is already installed."
     fi
+
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
 
     log_section "Installing Java"
     sdk install java "${FEDORALAUNCH_SDKMAN_JAVA_VERSION}"
