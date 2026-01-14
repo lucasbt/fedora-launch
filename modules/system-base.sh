@@ -11,9 +11,9 @@ system_base_main() {
     print_header "System Base Configuration"
 
     log_section "System init configuration"
-    sudo systemctl disable NetworkManager-wait-online.service
-    sudo rm -rf /etc/xdg/autostart/org.gnome.Software.desktop || true
-    sudo rm -rf /etc/yum.repos.d/{_copr:copr.fedorainfracloud.org:phracek:PyCharm.repo,rpmfusion-nonfree-nvidia-driver.repo,rpmfusion-nonfree-steam.repo}
+    sudo systemctl disable NetworkManager-wait-online.service >/dev/null 2>&1 || true
+    sudo rm -rf /etc/xdg/autostart/org.gnome.Software.desktop >/dev/null 2>&1 || true
+    sudo rm -rf /etc/yum.repos.d/{_copr:copr.fedorainfracloud.org:phracek:PyCharm.repo,rpmfusion-nonfree-nvidia-driver.repo,rpmfusion-nonfree-steam.repo} >/dev/null 2>&1 || true
     log_section "System init configuration applied."
 
     log_section "Update System"
@@ -41,7 +41,7 @@ system_base_main() {
         dnf_install \
             "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
             "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
-        dnf_install -y rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
+        dnf_install rpmfusion-free-release-tainted rpmfusion-nonfree-release-tainted
 
         log_success "RPM Fusion repositories enabled."
     else
@@ -55,14 +55,13 @@ system_base_main() {
 
     log_section "Installing Proprietary Firmware"
     if [ "${FEDORALAUNCH_INSTALL_PROPRIETARY_FIRMWARE}" = true ]; then
-        dnf_install linux-firmware intel-microcode iwl7260-firmware
-            log_section "Update Firmwares"
-            sudo fwupdmgr refresh --force
-            sudo fwupdmgr get-devices # Lists devices with available updates.
-            sudo fwupdmgr get-updates # Fetches list of available updates.
-            sudo fwupdmgr update
-            log_success "Firmwares updated."
-        log_success "Proprietary firmware installed."
+        dnf_install linux-firmware
+        log_section "Update Firmwares"
+        sudo fwupdmgr refresh --force >/dev/null 2>&1 || true
+        sudo fwupdmgr get-devices >/dev/null 2>&1 || true
+        sudo fwupdmgr get-updates >/dev/null 2>&1 || true
+        sudo fwupdmgr update >/dev/null 2>&1 || true
+        log_success "Firmwares updated."
     else
         log_info "Skipping proprietary firmware installation."
     fi
