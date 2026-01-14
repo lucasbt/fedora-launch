@@ -217,11 +217,11 @@ enable_service() {
     local description="${2:-$service}"
 
     log_info "Enabling $description service..."
-    if superuser_do systemctl enable "$service"; then
+    if sudo systemctl enable "$service"; then
         log_success "$description service enabled"
         return 0
     else
-        log_failed "Failed to enable $description service"
+        log_warning "Failed to enable $description service"
         return 1
     fi
 }
