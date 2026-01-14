@@ -68,7 +68,7 @@ run_module() {
     log_info "Running module: ${module_name}"
     source "$module_file"
     "$module_func"
-    print_footer "Module '${module_name}' executed."
+    log_info "Module '${module_name}' executed."
 }
 
 install_all_modules() {
@@ -82,7 +82,7 @@ install_all_modules() {
         run_module "$module_name"
     done
     
-    print_footer "All modules installed."
+    log_info "All modules installed."
 }
 
 edit_config() {

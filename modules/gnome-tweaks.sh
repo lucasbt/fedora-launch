@@ -9,7 +9,7 @@ source "${SCRIPT_DIR}/lib/utils.sh"
 
 # Apply filesystem tweaks
 apply_filesystem_tweaks() {
-    log_section "Applying SSD TRIM..."    
+    log_section "Applying SSD TRIM"    
     # Enable TRIM for SSDs
     if sudo fstrim -v / &>/dev/null; then
         enable_service "fstrim.timer" "TRIM Timer"
@@ -19,7 +19,7 @@ apply_filesystem_tweaks() {
 
 # Configure development environment
 configure_folders_development_environment() {
-    log_section "Configuring development and folders environment..."
+    log_section "Configuring development and folders environment"
 
     # Create common development directories
     ensure_dir "$HOME/Develop"
@@ -48,7 +48,7 @@ configure_folders_development_environment() {
 
 # Setup directory bookmarks
 setup_directory_bookmarks() {
-    log_section "Configuring directory bookmarks..."
+    log_section "Configuring directory bookmarks"
     
     local bookmarks_file="$HOME/.bookmarks"
 
@@ -185,7 +185,7 @@ gnome_tweaks_main() {
 
     log_success "GNOME settings applied."
     
-    log_section "Enabling nano syntax highlighting..." ##############################################
+    log_section "Enabling nano syntax highlighting" ##############################################
 
     local nanorc_file="$HOME/.nanorc"
     local include_line="include /usr/share/nano/*"
