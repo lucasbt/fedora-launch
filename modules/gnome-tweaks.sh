@@ -15,6 +15,19 @@ apply_filesystem_tweaks() {
         enable_service "fstrim.timer" "TRIM Timer"
         log_success "SSD TRIM enabled"
     fi
+
+    log_section "Remove any unused Gnome applications"
+    sudo dnf remove gnome-maps gnome-contacts gnome-clocks yelp gnome-tour -y
+
+    log_section "Remove autostart apps"
+    sudo rm -f /etc/xdg/autostart/{liveinst-setup,orca-autostart,org.gnome.Evolution-alarm-notify,localsearch-3}.desktop
+
+    log_section "Disable file tracker (for performance on older machines)"
+    sudo rm -f /usr/share/localsearch3/extract-rules/* || true
+    systemctl --user stop localsearch-3.service
+    systemctl --user mask localsearch-3.service
+    gs_set org.gnome.desktop.search-providers disabled ['org.gnome.Nautilus.desktop', 'org.gnome.Boxes.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Characters.desktop', 'org.mozilla.firefox.desktop', 'org.gnome.Software.desktop']
+
 }
 
 # Configure development environment
@@ -147,9 +160,13 @@ gnome_tweaks_main() {
     gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ binding '<Control><Alt>t'
 
     # Center new windows in the middle of the screen
-    gs_set org.gnome.mutter center-new-windows true
+    gs_set org.gnome.mutter center-new-windows false
+    gs_set org.gnome.mutter workspaces-only-on-primary true
+    gs_set org.gnome.mutter dynamic-workspaces false
 
     gs_set org.gnome.desktop.wm.preferences num-workspaces 4
+
+    gs_set org.gnome.desktop.sound event-sounds false
     
     gs_set org.gnome.desktop.peripherals.keyboard numlock-state true
     gs_set org.gnome.desktop.sound allow-volume-above-100-percent true
@@ -164,6 +181,8 @@ gnome_tweaks_main() {
     gs_set org.gnome.TextEditor spellcheck 'false'
     gs_set org.gnome.TextEditor show-map 'true'
     gs_set org.gnome.TextEditor highlight-current-line 'true'
+    gs_set org.gnome.TextEditor tab-width 4
+    gs_set org.gnome.TextEditor indent-style 'space'
 
     gs_set org.gnome.shell.keybindings show-screenshot-ui "['<Shift><Super>s']"
     gs_set org.gnome.settings-daemon.plugins.media-keys home "['<Super>e']"
@@ -178,11 +197,18 @@ gnome_tweaks_main() {
     gs_set org.gtk.gtk4.Settings.FileChooser sort-column 'modified'
     gs_set org.gtk.gtk4.Settings.FileChooser sort-order 'ascending'
     gs_set org.gtk.gtk4.Settings.FileChooser view-type 'list'
+    gs_set org.gtk.Settings.FileChooser show-hidden true
     gs_set org.gnome.desktop.background show-desktop-icons 'false'
     gs_set org.gnome.desktop.calendar show-weekdate 'true'
     gs_set org.gnome.nautilus.preferences show-delete-permanently 'true'
     gs_set org.gnome.nautilus.preferences show-create-link 'true'
+    gs_set org.gnome.Ptyxis audible-bell true
+    gs_set org.gnome.Ptyxis visual-bell false
 
+    gs_set org.gnome.software allow-updates false
+    gs_set org.gnome.software download-updates false
+    gs_set org.gnome.software download-updates-notify false
+    
     log_success "GNOME settings applied."
     
     log_section "Enabling nano syntax highlighting" ##############################################

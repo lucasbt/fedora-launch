@@ -150,33 +150,57 @@ StartupWMClass=jetbrains-idea" | sudo tee /usr/share/applications/intellij-idea.
         log_info "Intellij IDEA is already installed."
     fi
 
+    log_section "Installing Cursor IDE"
+    if ! command -v cursor &> /dev/null; then
+        dnf_install https://api2.cursor.sh/updates/download/golden/linux-x64-rpm/cursor/latest
+        log_success "Cursor IDE installed."
+    else
+        log_info "Cursor IDE is already installed."
+    fi
+
     log_section "Installing Spring Tool Suite (STS)"
     if [ ! -d "/opt/sts" ]; then
-        local sts_url=$(curl -s https://spring.io/tools | grep -o 'https://[^"]*linux.gtk.x86_64.tar.gz' | head -1)
-        if [ -n "$sts_url" ]; then
-            log_info "Downloading STS from $sts_url..."
-            curl -L "$sts_url" -o /tmp/sts.tar.gz
-            sudo rm -rf /opt/sts
-            sudo mkdir -p /opt/sts
-            sudo tar -xzf /tmp/sts.tar.gz -C /opt/sts --strip-components=1
-            rm /tmp/sts.tar.gz
+        # 1. Busca no HTML da página a tag <a> que contém o link terminando com o sufixo desejado
+        # Usamos o User-Agent para evitar que o site bloqueie o curl
+        local sts_url=$(curl -sL -A "Mozilla/5.0" https://spring.io/tools | \
+            grep -oP 'https://[^"]+linux\.gtk\.x86_64\.tar\.gz' | head -1)
 
-            echo "[Desktop Entry]
-Name=Spring Tool Suite 4
+        if [ -n "$sts_url" ]; then
+            log_info "Detected latest version link: $sts_url"
+            log_info "Downloading STS..."
+            
+            curl -L "$sts_url" -o /tmp/sts.tar.gz
+            
+            if [ -f "/tmp/sts.tar.gz" ]; then
+                sudo rm -rf /opt/sts
+                sudo mkdir -p /opt/sts
+                
+                log_info "Extracting to /opt/sts..."
+                sudo tar -xzf /tmp/sts.tar.gz -C /opt/sts --strip-components=2
+                rm /tmp/sts.tar.gz
+
+                sudo curl -L "https://spring.io/img/projects/spring-tool.svg" -o /opt/sts/spring-tool.svg
+
+                # Criação do atalho Desktop
+                echo "[Desktop Entry]
+Name=Spring Tool For Eclipse
 Comment=Spring Boot IDE
-Exec=/opt/sts/SpringToolSuite4
-Icon=/opt/sts/icon.xpm
+Exec=/opt/sts/SpringToolsForEclipse
+Icon=/opt/sts/spring-tool.svg
 Terminal=false
 Type=Application
 Categories=Development;IDE;Java;
-StartupWMClass=SpringToolSuite4" | sudo tee /usr/share/applications/sts4.desktop > /dev/null
-            log_success "Spring Tool Suite installed."
+StartupWMClass=SpringToolForEclipse" | sudo tee /usr/share/applications/sts.desktop > /dev/null                
+                
+                log_success "Spring Tool Suite installed successfully from $sts_url"
+            else
+                log_error "Download failed. File not found in /tmp."
+            fi
         else
-            log_error "Could not find STS download URL."
+            log_error "Could not find the download URL for STS for Linux x64 on spring.io"
         fi
     else
-        log_info "STS is already installed."
-
+        log_info "STS is already installed in /opt/sts."
     fi
 
     log_section "Installing Microsoft Visual Studio Code"
@@ -262,6 +286,9 @@ EOF
     fi
 
     log_success "Cloud tools installed."
+
+    sudo update-desktop-database /usr/share/applications
+    update-desktop-database ~/.local/share/applications/
 
     print_footer "Development Tools Installation Completed"
 }

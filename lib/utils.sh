@@ -146,7 +146,7 @@ gs_get() {
 
 dnf_install() {
     log_info "Installing DNF packages: $*"
-    sudo dnf install -y "$@" --setopt=install_weak_deps=False
+    sudo dnf install -y "$@" --setopt=install_weak_deps=False --no-gpgchecks --best
 }
 
 flatpak_install() {
@@ -236,6 +236,20 @@ start_service() {
         return 0
     else
         log_failed "Failed to start $description service"
+        return 1
+    fi
+}
+
+disable_service() {
+    local service="$1"
+    local description="${2:-$service}"
+
+    log_info "Disabling $description service..."
+    if sudo systemctl disable "$service"; then
+        log_success "$description service enabled"
+        return 0
+    else
+        log_warning "Failed to disable $description service"
         return 1
     fi
 }
