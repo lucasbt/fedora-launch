@@ -11,7 +11,7 @@ dev_tools_main() {
     print_header "Development Tools Installation"
 
     log_section "Installing Build Essentials"
-    dnf_install gcc make cmake automake gcc-c++ kernel-devel autoconf libtool pkg-config pkgconf kernel-headers bison clang
+    dnf_install gcc make cmake automake gcc-c++ kernel-devel autoconf libtool pkg-config pkgconf kernel-headers bison clang openssl-devel libffi-devel zlib-devel bzip2-devel readline-devel sqlite-devel xz-devel
     log_success "Build essentials installed."
 
     log_section "Installing Git"
@@ -60,16 +60,17 @@ dev_tools_main() {
     nvm install "${FEDORALAUNCH_NODEJS_VERSION:---lts}"
     log_success "NVM and Node.js installed."
 
-    log_section "Installing pyenv and Python"
-    if [ ! -d "$HOME/.pyenv" ]; then
-        curl https://pyenv.run | bash
+    log_section "Installing Python Ecosystem"    
+    dnf_install python3 python3-pip python3-virtualenv python3-devel pipx
+    # Garante que pipx esteja disponível
+    if ! command -v pipx &> /dev/null; then
+        log_error "pipx is not available after installation"
+    else
+        pipx ensurepath
+        export PATH="$HOME/.local/bin:$PATH"
+        command -v poetry &> /dev/null || { log_section "Installing Poetry"; pipx install poetry; }
+        log_success "Python Ecosystem installed."
     fi
-    export PATH="$HOME/.pyenv/bin:$PATH"
-    eval "$(pyenv init --path)"
-    eval "$(pyenv init -)"
-    pyenv install -s "${FEDORALAUNCH_PYENV_PYTHON_VERSION}"
-    pyenv global "${FEDORALAUNCH_PYENV_PYTHON_VERSION}"
-    log_success "pyenv and Python installed."
 
     log_section "Installing Go"
     local go_ver="${FEDORALAUNCH_GOLANG_VERSION}"
