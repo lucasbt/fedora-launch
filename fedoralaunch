@@ -208,7 +208,7 @@ main() {
             show_banner
             if [ "$1" = "all" ]; then
                 install_all_modules
-                log_warning "\nConsider restarting your system to properly apply the changes!"
+                log_warning "\nATTENTION!!! CONSIDER RESTARTING YOUR SYSTEM TO PROPERLY APPLY THE CHANGES!"
             elif [ -n "$1" ]; then
                 run_module "$1"
             else
