@@ -25,12 +25,6 @@ flatpak_apps_main() {
     flatpak_install be.alexandervanhee.gradia
     log_success "Flatpak applications installed."
 
-    log_section "Configuring Flatpak Themes"
-    sudo flatpak override --filesystem=~/.themes
-    sudo flatpak override --filesystem=~/.icons
-    sudo flatpak override --env=GTK_THEME=Adwaita:dark
-    log_success "Flatpak themes configured."
-
     print_footer "Flatpak Applications Installation Completed"
 }
 

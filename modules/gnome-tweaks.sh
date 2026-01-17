@@ -26,8 +26,10 @@ apply_filesystem_tweaks() {
     sudo rm -f /usr/share/localsearch3/extract-rules/* || true
     systemctl --user stop localsearch-3.service
     systemctl --user mask localsearch-3.service
-    gs_set org.gnome.desktop.search-providers disabled "['/org/gnome/Nautilus.desktop', '/org/gnome/Boxes.desktop', '/org/gnome/Calendar.desktop', '/org/gnome/Characters.desktop', '/org/mozilla/firefox.desktop', '/org/gnome/Software.desktop']"
-
+    gs_set org.gnome.desktop.search-providers disable-external true
+    gs_set org.gnome.desktop.search-providers enabled "['org.gnome.Shell.Applications']"
+    gs_set org.gnome.desktop.search-providers disabled "[]"
+    gs_set org.gnome.desktop.search-providers sort-order "['org.gnome.Shell.Applications']"
 }
 
 # Configure development environment
@@ -59,9 +61,9 @@ configure_folders_development_environment() {
     log_success "Development and folders environment configured"
 }
 
-# Setup directory bookmarks
-setup_directory_bookmarks() {
-    log_section "Configuring directory bookmarks"
+# Setup bookmarks
+setup_bookmarks() {
+    log_section "Configuring bookmarks"
     
     local bookmarks_file="$HOME/.bookmarks"
 
@@ -80,41 +82,9 @@ b=$HOME/Documents/resources/brain
 a=$HOME/Documents/archives
 EOF
 
-        # Add bookmark functions to shell functions
-        cat >> "$HOME/.bash_functions" << 'EOF'
-
-# Bookmark functions
-bm() {
-    local bookmark=$(grep "^$1=" ~/.bookmarks 2>/dev/null | cut -d'=' -f2)
-    if [ -n "$bookmark" ]; then
-        cd "$bookmark"
+        log_success "Bookmarks configured"
     else
-        echo "Bookmark '$1' not found"
-        echo "Available bookmarks:"
-        cat ~/.bookmarks | grep -v '^#' | cut -d'=' -f1
-    fi
-}
-
-bookmark() {
-    if [ -z "$1" ]; then
-        echo "Usage: bookmark <name>"
-        return 1
-    fi
-    echo "$1=$(pwd)" >> ~/.bookmarks
-    echo "Bookmarked $(pwd) as '$1'"
-}
-
-bookmarks() {
-    echo "Available bookmarks:"
-    cat ~/.bookmarks | grep -v '^#' | while IFS='=' read -r name path; do
-        printf "  %-15s %s\n" "$name" "$path"
-    done
-}
-EOF
-
-        log_success "Directory bookmarks configured"
-    else
-        log_info "Directory bookmarks already configured"
+        log_info "Bookmarks already configured"
     fi
 }
 
@@ -141,23 +111,22 @@ gnome_tweaks_main() {
     gs_set org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>4']"
     gs_set org.gnome.desktop.wm.keybindings switch-to-workspace-5 "['<Super>5']"
     gs_set org.gnome.desktop.wm.keybindings switch-to-workspace-6 "['<Super>6']"
-    # Reserve slots for custom keybindings
-    gs_set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom4/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom5/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom6/']"
     
-    # Set flameshot (with the sh fix for starting under Wayland) on alternate print screen key
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Flameshot'
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command 'sh -c -- "flameshot gui"'
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Control>Print'
-
+    # Set Gradia Screenshot
+    gs_set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']"
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Gradia Screenshot' 
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'flatpak run be.alexandervanhee.gradia --screenshot=INTERACTIVE'
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Control>Print'
+    # Set Task Manager
+    gs_set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/']"
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Task Manager'
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command 'gnome-system-monitor'
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Control><Shift>Escape'
+    # Set Terminal
     gs_set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/']"
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'taskmanager'
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'gnome-system-monitor'
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Control><Shift>Escape'
-
-    gs_set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/']"
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ name 'terminal'
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ command 'ptyxis'
-    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/ binding '<Control><Alt>t'
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'Terminal'
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'ptyxis'
+    gs_set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Control><Alt>t'
 
     # Center new windows in the middle of the screen
     gs_set org.gnome.mutter center-new-windows false
@@ -202,8 +171,13 @@ gnome_tweaks_main() {
     gs_set org.gnome.desktop.calendar show-weekdate 'true'
     gs_set org.gnome.nautilus.preferences show-delete-permanently 'true'
     gs_set org.gnome.nautilus.preferences show-create-link 'true'
-    gs_set org.gnome.Ptyxis audible-bell true
+    gs_set org.gnome.Ptyxis audible-bell false
     gs_set org.gnome.Ptyxis visual-bell false
+    gs_set org.gnome.Ptyxis use-system-font false
+    gs_set org.gnome.Ptyxis font-name 'Adwaita Mono 12'
+    PROFILE_UUID=$(gsettings get org.gnome.Ptyxis profile-uuids | tr -d "[]' " | cut -d, -f1)
+    PROFILE_PATH="/org/gnome/Ptyxis/Profiles/${PROFILE_UUID}/"
+    gs_set org.gnome.Ptyxis.Profile:${PROFILE_PATH} palette "Elementary"
 
     gs_set org.gnome.software allow-updates false
     gs_set org.gnome.software download-updates false
@@ -254,7 +228,7 @@ gnome_tweaks_main() {
     log_section "Installing Gnome Extensions" #############################################
     dnf_install gnome-shell-extension-appindicator gnome-shell-extension-auto-move-windows \
         gnome-shell-extension-background-logo gnome-shell-extension-caffeine gnome-shell-extension-dash-to-dock \
-        gnome-shell-extension-just-perfection gnome-shell-extension-user-theme
+        gnome-shell-extension-just-perfection gnome-shell-extension-user-theme gnome-shell-extension-no-overview
     log_success "Gnome Extensions installed."
 
     log_section "Some adjusts to GNOME and Apps"
@@ -289,7 +263,7 @@ bind -x '"\C-r":"__fzf_lazy_load"'
 
     apply_filesystem_tweaks
     configure_folders_development_environment
-    setup_directory_bookmarks
+    setup_bookmarks
 
     print_footer "GNOME Tweaks Completed"
 }
