@@ -19,7 +19,7 @@ Modular and intelligent post-install for Fedora Workstation, optimized for older
 
 - Fedora 43+ Workstation
 - GNOME Desktop
-- Wayland (recommended)
+- Wayland
 - Internet connection
 
 ## 🚀 Quick Installation
