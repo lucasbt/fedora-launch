@@ -148,7 +148,7 @@ EOF
         inxi mediainfo gparted pciutils openssh-clients symlinks youtube-dl libreoffice \
         autocorr-pt libreoffice-help-pt-BR libreoffice-langpack-pt-BR cozy transmission \
         cloc fastfetch figlet lsd hplip hplip-common hplip-libs lm_sensors timew cronie \
-        xclip tldr sqlite pv stow foliate flameshot wl-clipboard util-linux-user \
+        xclip tldr sqlite pv stow foliate wl-clipboard util-linux-user \
         httpie flatseal file-roller dconf-editor cifs-utils fuse fuse-sshfs gvfs-fuse \
         gtk-murrine-engine gtk2-engines adw-gtk3-theme sassc glib2-devel gnome-themes-extra fd-find
     log_success "Extras RPM tools installed."
