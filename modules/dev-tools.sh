@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Description: Development tools
+# Description: Development tools (profiles + cache + podman)
 # Category: development
 # Priority: 5
 
@@ -7,291 +7,313 @@ set -euo pipefail
 
 source "${SCRIPT_DIR}/lib/utils.sh"
 
-dev_tools_main() {
-    print_header "Development Tools Installation"
+PROFILE="${FEDORALAUNCH_DEV_PROFILE:-dev}"
 
-    log_section "Installing Build Essentials"
-    dnf_install gcc make cmake automake gcc-c++ kernel-devel autoconf libtool pkg-config pkgconf kernel-headers bison clang openssl-devel libffi-devel zlib-devel bzip2-devel readline-devel sqlite-devel xz-devel
-    log_success "Build essentials installed."
+# ------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------
+cached_download() {
+    local url="$1"
+    local output="$2"
 
-    log_section "Installing Git"
-    dnf_install git git-lfs git-delta git-subtree hexedit meld
-    git config --global credential.helper 'cache --timeout=14400000'
-    log_success "Git installed."
-
-    log_section "Installing SDKMAN"
-    set +u
-    if [ ! -d "$HOME/.sdkman" ]; then
-        curl -s "https://get.sdkman.io" | bash        
-        log_success "SDKMAN installed."
+    if [ ! -f "$output" ]; then
+        log_info "Downloading $(basename "$output")"
+        curl -L "$url" -o "$output"
     else
-        log_info "SDKMAN is already installed."
+        log_info "Using cached $(basename "$output")"
     fi
+}
 
+# ------------------------------------------------------------
+# Base toolchains
+# ------------------------------------------------------------
+install_build_essentials() {
+    log_section "Installing Build Essentials"
+    dnf_install gcc make cmake automake gcc-c++ \
+        kernel-devel kernel-headers \
+        autoconf libtool pkg-config \
+        clang openssl-devel libffi-devel \
+        zlib-devel bzip2-devel xz-devel \
+        readline-devel sqlite-devel
+}
+
+install_git() {
+    log_section "Installing Git"
+    dnf_install git git-lfs git-delta meld
+    git config --global credential.helper 'cache --timeout=14400000'
+}
+
+# ------------------------------------------------------------
+# JVM stack
+# ------------------------------------------------------------
+install_java_stack() {
+    log_section "Installing SDKMAN + Java Stack"
+
+    set +u
+    [ -d "$HOME/.sdkman" ] || curl -s https://get.sdkman.io | bash
     source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-    log_section "Installing Java"
     sdk install java "${FEDORALAUNCH_SDKMAN_JAVA_VERSION}"
-    log_success "Java installed."
-
-    log_section "Installing Maven"
-    if [ -n "$FEDORALAUNCH_SDKMAN_MAVEN_VERSION" ]; then
-        sdk install maven "${FEDORALAUNCH_SDKMAN_MAVEN_VERSION}"
-    else
-        sdk install maven
-    fi
-    log_success "Maven installed."
-
-    log_section "Installing Gradle"
-    if [ -n "$FEDORALAUNCH_SDKMAN_GRADLE_VERSION" ]; then
-        sdk install gradle "${FEDORALAUNCH_SDKMAN_GRADLE_VERSION}"
-    else
-        sdk install gradle
-    fi
+    sdk install maven
+    sdk install gradle
     set -u
-    log_success "Gradle installed."
-    
-    log_section "Installing NVM and Node.js"
-    if [ ! -d "$HOME/.nvm" ]; then
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
-    fi
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    nvm install "${FEDORALAUNCH_NODEJS_VERSION:---lts}"
-    log_success "NVM and Node.js installed."
+}
 
-    log_section "Installing Python Ecosystem"    
-    dnf_install python3 python3-pip python3-virtualenv python3-devel pipx
-    # Garante que pipx esteja disponível
-    if ! command -v pipx &> /dev/null; then
-        log_error "pipx is not available after installation"
-    else
-        pipx ensurepath
-        export PATH="$HOME/.local/bin:$PATH"
-        command -v poetry &> /dev/null || { log_section "Installing Poetry"; pipx install poetry; }
-        log_success "Python Ecosystem installed."
-    fi
-
+# ------------------------------------------------------------
+# Go
+# ------------------------------------------------------------
+install_go() {
     log_section "Installing Go"
-    local go_ver="${FEDORALAUNCH_GOLANG_VERSION}"
-    
-    if [ -z "$go_ver" ]; then
-        log_info "Fetching latest Go version..."
-        go_ver=$(curl -sL "https://go.dev/dl/?mode=json" | grep -o '"version": "go[^"]*"' | head -1 | cut -d'"' -f4)
-    else
-        if [[ "${go_ver}" != go* ]]; then
-            go_ver="go${go_ver}"
-        fi
-    fi
 
-    local current_go=""
-    if [ -x "/usr/local/go/bin/go" ]; then
-        current_go=$(/usr/local/go/bin/go version | awk '{print $3}')
-    fi
+    local ver="${FEDORALAUNCH_GOLANG_VERSION}"
+    [[ "$ver" == go* ]] || ver="go${ver}"
 
-    if [ "$current_go" != "$go_ver" ]; then
-        log_info "Installing ${go_ver}..."
-        curl -L "https://go.dev/dl/${go_ver}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
-        sudo rm -rf /usr/local/go
-        sudo tar -C /usr/local -xzf /tmp/go.tar.gz
-        rm /tmp/go.tar.gz
-        
-        if ! grep -q "/usr/local/go/bin" "$HOME/.bashrc"; then
-            echo 'export PATH=$PATH:/usr/local/go/bin' >> "$HOME/.bashrc"
-        fi
-        log_success "Go ${go_ver} installed."
-    else
-        log_info "Go ${go_ver} is already installed."
-    fi
+    local tar="$CACHE_DIR/${ver}.linux-amd64.tar.gz"
 
-    log_section "Installing Rust"
-    if [ ! -d "$HOME/.cargo" ]; then
-        log_info "Installing Rustup..."
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source "$HOME/.cargo/env"
-    fi
+    cached_download \
+        "https://go.dev/dl/${ver}.linux-amd64.tar.gz" \
+        "$tar"
 
-    source "$HOME/.cargo/env"
-    if [ -n "$FEDORALAUNCH_RUST_VERSION" ]; then
-        log_info "Installing Rust ${FEDORALAUNCH_RUST_VERSION}..."
-        rustup install "${FEDORALAUNCH_RUST_VERSION}"
-        rustup default "${FEDORALAUNCH_RUST_VERSION}"
-        log_success "Rust ${FEDORALAUNCH_RUST_VERSION} installed."
-    else
-        log_info "Installing Rust (stable)..."
-        rustup install stable
-        rustup default stable
-        log_success "Rust (stable) installed."
-    fi
+    sudo rm -rf /usr/local/go
+    sudo tar -C /usr/local -xzf "$tar"
 
-    log_section "Installing IntelliJ IDEA"
-    if [ ! -d "/opt/intellij" ]; then
-        local intellij_url=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release" | jq -r '.IIC[0].downloads.linux.link')
-        if [ -n "$intellij_url" ]; then
-            log_info "Downloading IntelliJ IDEA from $intellij_url..."
-            curl -L "$intellij_url" -o /tmp/intellij.tar.gz
-            sudo rm -rf /opt/intellij
-            sudo mkdir -p /opt/intellij
-            sudo tar -xzf /tmp/intellij.tar.gz -C /opt/intellij --strip-components=1
-            rm /tmp/intellij.tar.gz            
-            echo "[Desktop Entry]
+    grep -q "/usr/local/go/bin" "$HOME/.bashrc" || \
+        echo 'export PATH=$PATH:/usr/local/go/bin' >> "$HOME/.bashrc"
+}
+
+# ------------------------------------------------------------
+# IDEs
+# ------------------------------------------------------------
+install_ides() {
+    log_section "Installing IDEs"
+
+    # IntelliJ
+    if [ ! -d /opt/intellij ]; then
+        local json url tar
+        json=$(curl -s "https://data.services.jetbrains.com/products/releases?code=IIC&latest=true&type=release")
+        url=$(echo "$json" | jq -r '.IIC[0].downloads.linux.link')
+        tar="$CACHE_DIR/intellij.tar.gz"
+
+        cached_download "$url" "$tar"
+
+        sudo mkdir -p /opt/intellij
+        sudo tar -xzf "$tar" -C /opt/intellij --strip-components=1
+
+        sudo tee /usr/share/applications/intellij.desktop >/dev/null <<EOF
+[Desktop Entry]
 Name=IntelliJ IDEA Community
-Comment=The Drive to Develop
 Exec=/opt/intellij/bin/idea.sh
 Icon=/opt/intellij/bin/idea.svg
-Terminal=false
 Type=Application
 Categories=Development;IDE;
-StartupWMClass=jetbrains-idea" | sudo tee /usr/share/applications/intellij-idea.desktop > /dev/null
-            log_success "IntelliJ IDEA installed."
-        else
-            log_error "Could not find IntelliJ IDEA download URL."
-        fi
-    else
-        log_info "Intellij IDEA is already installed."
+StartupWMClass=jetbrains-idea
+EOF
     fi
 
-    log_section "Installing Cursor IDE"
-    if ! command -v cursor &> /dev/null; then
-        dnf_install https://api2.cursor.sh/updates/download/golden/linux-x64-rpm/cursor/latest
-        log_success "Cursor IDE installed."
-    else
-        log_info "Cursor IDE is already installed."
+    # Zed
+    command -v zed &>/dev/null || curl -f https://zed.dev/install.sh | sh
+}
+
+# ------------------------------------------------------------
+# Containers — Podman
+# ------------------------------------------------------------
+install_podman() {
+    log_section "Installing Podman (rootless)"
+
+    dnf_install podman podman-compose crun \
+        slirp4netns fuse-overlayfs
+
+    systemctl --user enable --now podman.socket
+
+    mkdir -p ~/.config/containers
+
+    tee ~/.config/containers/containers.conf >/dev/null <<EOF
+[engine]
+runtime="crun"
+cgroup_manager="systemd"
+events_logger="journald"
+EOF
+
+    tee ~/.config/containers/storage.conf >/dev/null <<EOF
+[storage]
+driver="overlay"
+graphroot="\$HOME/.local/share/containers/storage"
+runroot="/run/user/$(id -u)"
+
+[storage.options.overlay]
+mount_program="/usr/bin/fuse-overlayfs"
+EOF
+}
+
+# ------------------------------------------------------------
+# Kubernetes / Cloud
+# ------------------------------------------------------------
+install_cloud_tools() {
+    log_section "Installing Kubernetes & Cloud Tools"
+
+    # kubectl
+    if ! command -v kubectl &>/dev/null; then
+        local ver bin
+        ver=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+        bin="$CACHE_DIR/kubectl"
+
+        cached_download \
+            "https://storage.googleapis.com/kubernetes-release/release/${ver}/bin/linux/amd64/kubectl" \
+            "$bin"
+
+        sudo install "$bin" /usr/local/bin/kubectl
     fi
 
-    log_section "Installing Spring Tool Suite (STS)"
-    if [ ! -d "/opt/sts" ]; then
-        # 1. Busca no HTML da página a tag <a> que contém o link terminando com o sufixo desejado
-        # Usamos o User-Agent para evitar que o site bloqueie o curl
-        local sts_url=$(curl -sL -A "Mozilla/5.0" https://spring.io/tools | \
-            grep -oP 'https://[^"]+linux\.gtk\.x86_64\.tar\.gz' | head -1)
+    # Minikube
+    if ! command -v minikube &>/dev/null; then
+        local url bin
+        url=$(curl -s https://api.github.com/repos/kubernetes/minikube/releases/latest \
+            | grep minikube-linux-amd64 | cut -d'"' -f4)
+        bin="$CACHE_DIR/minikube"
 
-        if [ -n "$sts_url" ]; then
-            log_info "Detected latest version link: $sts_url"
-            log_info "Downloading STS..."
-            
-            curl -L "$sts_url" -o /tmp/sts.tar.gz
-            
-            if [ -f "/tmp/sts.tar.gz" ]; then
-                sudo rm -rf /opt/sts
-                sudo mkdir -p /opt/sts
-                
-                log_info "Extracting to /opt/sts..."
-                sudo tar -xzf /tmp/sts.tar.gz -C /opt/sts --strip-components=2
-                rm /tmp/sts.tar.gz
+        cached_download "$url" "$bin"
+        sudo install "$bin" /usr/local/bin/minikube
+    fi
 
-                sudo curl -L "https://spring.io/img/projects/spring-tool.svg" -o /opt/sts/spring-tool.svg
+    # Default driver = podman
+    minikube config set driver podman
+}
 
-                # Criação do atalho Desktop
-                echo "[Desktop Entry]
-Name=Spring Tool For Eclipse
-Comment=Spring Boot IDE
-Exec=/opt/sts/SpringToolsForEclipse
-Icon=/opt/sts/spring-tool.svg
+install_postman() {
+    log_section "Installing Postman"
+
+    local install_dir="/opt/postman"
+    local cache_dir="${CACHE_DIR:-$HOME/.cache/fedoralaunch}"
+    local archive="${cache_dir}/postman-linux-x64.tar.gz"
+
+    mkdir -p "$cache_dir"
+
+    if [ ! -d "$install_dir" ]; then
+        log_info "Downloading Postman..."
+        curl -L "https://dl.pstmn.io/download/latest/linux64" -o "$archive"
+
+        log_info "Installing Postman to ${install_dir}..."
+        sudo rm -rf "$install_dir"
+        sudo mkdir -p "$install_dir"
+        sudo tar -xzf "$archive" -C /opt
+        sudo mv /opt/Postman "$install_dir"
+        sudo chown -R $USER:$USER "$install_dir"
+
+        log_success "Postman installed."
+    else
+        log_info "Postman already installed."
+    fi
+
+    # Desktop entry (user-level, GNOME friendly)
+    local desktop_file="$HOME/.local/share/applications/postman.desktop"
+
+    if [ ! -f "$desktop_file" ]; then
+        log_info "Creating Postman desktop entry..."
+
+        mkdir -p "$HOME/.local/share/applications"
+
+        cat > "$desktop_file" <<EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=Postman
+Comment=API Development Environment
+Exec=${install_dir}/app/Postman %U
+Icon=${install_dir}/app/resources/app/assets/icon.png
 Terminal=false
 Type=Application
-Categories=Development;IDE;Java;
-StartupWMClass=SpringToolForEclipse" | sudo tee /usr/share/applications/sts.desktop > /dev/null                
-                
-                log_success "Spring Tool Suite installed successfully from $sts_url"
-            else
-                log_error "Download failed. File not found in /tmp."
-            fi
-        else
-            log_error "Could not find the download URL for STS for Linux x64 on spring.io"
-        fi
-    else
-        log_info "STS is already installed in /opt/sts."
-    fi
-
-    log_section "Installing Microsoft Visual Studio Code"
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
-    dnf_install code
-    log_success "Microsoft Visual Studio Code installed."
-
-    log_section "Installing Zed Editor"
-    if ! command -v zed &> /dev/null; then
-        log_info "Installing Zed Editor..."
-        curl -f https://zed.dev/install.sh | sh
-        log_success "Zed Editor installed."
-    else
-        log_info "Zed Editor is already installed."
-    fi
-
-    log_section "Installing Docker"
-    sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux docker-engine-selinux docker-engine
-    sudo tee /etc/yum.repos.d/docker-ce.repo <<EOF
-[Docker-CE]
-name=Docker CE Stable - \$basearch
-baseurl=https://download.docker.com/linux/fedora/\$releasever/\$basearch/stable
-enabled=1
-gpgcheck=1
-gpgkey=https://download.docker.com/linux/fedora/gpg
+Categories=Development;
+StartupWMClass=Postman
 EOF
-    dnf_install docker-ce docker-ce-cli containerd.io docker-compose-plugin
-    sudo systemctl start docker
-    sudo systemctl enable docker
-    sudo usermod -aG docker "$USER"
-    log_success "Docker installed and configured."
 
-    log_section "Installing Modern CLI Tools"
-    dnf_install btop vim-enhanced wget perf htop iotop 
-    log_success "Modern CLI tools installed."
-
-    log_section "Installing Other Programming Languages"
-    dnf_install lua perl ruby 
-    log_success "Other Programming Languages installed."
-
-    log_section "Installing Cloud Tools"
-    # Instalar kubectl se não existir
-    if ! command -v kubectl &> /dev/null; then
-        log_info "Installing kubectl..."
-        local kubectl_version=$(curl -s "https://storage.googleapis.com/kubernetes-release/release/stable.txt")
-        curl -L "https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/amd64/kubectl" -o /tmp/kubectl
-        sudo install /tmp/kubectl /usr/local/bin/kubectl
-        rm /tmp/kubectl
-        log_success "kubectl installed."
+        log_success "Postman desktop entry created."
     else
-        log_info "kubectl is already installed."
+        log_info "Postman desktop entry already exists."
+    fi
+}
+
+install_insomnia() {
+    log_section "Installing Insomnia"
+
+    local cache_dir="${CACHE_DIR:-$HOME/.cache/fedoralaunch}"
+
+    log_info "Querying latest Insomnia release from GitHub..."
+
+    # Pega a tag da última versão
+    local tag
+    tag=$(curl -s https://api.github.com/repos/Kong/insomnia/releases/latest \
+        | grep -oP '"tag_name":\s*"\K([^"]+)' )
+
+    if [ -z "$tag" ]; then
+        log_error "We were unable to identify the latest version of Insomnia on GitHub."
+        return 1
     fi
 
-    # Instalar Minikube se não existir
-    if ! command -v minikube &> /dev/null; then
-        log_info "Installing Minikube..."
-        local minikube_url=$(curl -s "https://api.github.com/repos/kubernetes/minikube/releases/latest" \
-            | grep -o '"browser_download_url": "[^"]*minikube-linux-amd64"' | cut -d'"' -f4)
-        if [ -n "$minikube_url" ]; then
-            curl -L "$minikube_url" -o /tmp/minikube
-            sudo install /tmp/minikube /usr/local/bin/minikube
-            rm /tmp/minikube
-            log_success "Minikube installed."
-        else
-            log_error "Could not find Minikube download URL."
-        fi
-    else
-        log_info "Minikube is already installed."
+    log_info "Latest Insomnia release: $tag"
+
+    # Monta URL do RPM
+    local rpm_asset
+    rpm_asset=$(curl -s "https://api.github.com/repos/Kong/insomnia/releases/tags/${tag}" \
+        | grep -oP 'browser_download_url":\s*"\K([^"]*Insomnia\.Core[^"]*\.rpm)' )
+
+    if [ -z "$rpm_asset" ]; then
+        log_error "I couldn't find an asset .rpm file for the release $tag"
+        return 1
     fi
 
-    # Instalar AWS CLI se não existir
-    if ! command -v aws &> /dev/null; then
-        log_info "Installing AWS CLI..."
-        local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
-        curl "$aws_cli_url" -o "/tmp/awscliv2.zip"
-        unzip -q -o /tmp/awscliv2.zip -d /tmp
-        sudo /tmp/aws/install
-        rm -rf /tmp/aws /tmp/awscliv2.zip
-        log_success "AWS CLI installed."
+    log_info "Insomnia RPM asset found: $rpm_asset"
+
+    # Define arquivo local
+    local rpm_file="${cache_dir}/$(basename "${rpm_asset}")"
+
+    # Baixa com cache
+    if [ ! -f "$rpm_file" ]; then
+        log_info "Downloading Insomnia RPM to cache..."
+        curl -L "$rpm_asset" -o "$rpm_file"
     else
-        log_info "AWS CLI is already installed."
+        log_info "Using Insomnia RPM already cached"
     fi
 
-    log_success "Cloud tools installed."
+    # Instala com dnf (resolve deps)
+    log_info "Installing Insomnia RPM..."
+    sudo dnf install -y "$rpm_file"
 
-    sudo update-desktop-database /usr/share/applications
-    update-desktop-database ~/.local/share/applications/
+    log_success "Insomnia installed via RPM (from GitHub release)"
+}
 
-    print_footer "Development Tools Installation Completed"
+# ------------------------------------------------------------
+# Main (profiles)
+# ------------------------------------------------------------
+dev_tools_main() {
+    print_header "Dev Tools (profile: $PROFILE)"
+
+    install_build_essentials
+    install_git
+    install_postman
+    install_insomnia
+
+    case "$PROFILE" in
+        dev)
+            install_java_stack
+            install_go
+            install_ides
+            install_podman
+            install_cloud_tools
+            ;;
+        cloud)
+            install_podman
+            install_cloud_tools
+            ;;
+        java-only)
+            install_java_stack
+            install_ides
+            ;;
+        *)
+            log_error "Unknown profile: $PROFILE"
+            exit 1
+            ;;
+    esac
+
+    print_footer "Dev Tools Completed"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

@@ -11,6 +11,7 @@
 CONFIG_FILE="${SCRIPT_DIR}/config/.env"
 LOG_DIR="$HOME/.local/cache/fedoralaunch"
 LOG_FILE="${LOG_DIR}/fedoralaunch.log"
+CACHE_DIR="$HOME/.cache/fedoralaunch"
 
 # ---
 # ## Logging
@@ -264,6 +265,7 @@ load_config() {
         set -o allexport
         source "$CONFIG_FILE"
         set +o allexport
+        mkdir -p "$CACHE_DIR"
     else
         log_warning "Configuration file not found: $CONFIG_FILE"
     fi

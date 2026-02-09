@@ -13,15 +13,9 @@ flatpak_apps_main() {
     log_section "Installing Flatpak Applications"
     flatpak_install md.obsidian.Obsidian
     flatpak_install com.spotify.Client
-    flatpak_install com.getpostman.Postman
-    flatpak_install rest.insomnia.Insomnia
     flatpak_install com.usebottles.bottles
     flatpak_install org.localsend.localsend_app
     flatpak_install it.mijorus.gearlever
-    flatpak_install com.rtosta.zapzap
-    flatpak_install io.github.flattool.Warehouse
-    flatpak_install io.bassi.Amberol
-    flatpak_install org.gnome.gitlab.somas.Apostrophe
     flatpak_install be.alexandervanhee.gradia
     log_success "Flatpak applications installed."
 
