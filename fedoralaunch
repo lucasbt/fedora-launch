@@ -9,6 +9,8 @@ export SCRIPT_DIR="$HOME/.local/share/fedoralaunch"
 
 source "$SCRIPT_DIR/lib/utils.sh"
 
+LOCK_FILE="/tmp/fedoralaunch.lock"
+
 # ---
 # ## Global Variables
 # ---
@@ -19,6 +21,19 @@ MODULES_DIR="${SCRIPT_DIR}/modules"
 # ## Functions
 # ---
 
+acquire_lock() {
+    exec 9>"$LOCK_FILE" || exit 1
+    if ! flock -n 9; then
+        log_error "Another fedoralaunch process is already running."
+        exit 1
+    fi
+}
+
+release_lock() {
+    flock -u 9 || true
+    rm -f "$LOCK_FILE"
+}
+
 show_help() {
     echo "Fedora Launch v${FEDORALAUNCH_VERSION} — Post-install setup for Fedora 43+ made easy!"
     echo "...by the community, for the community!"
@@ -26,17 +41,18 @@ show_help() {
     echo "Usage: fedoralaunch [command]"
     echo
     echo "Commands:"
-    echo "  list                     List available modules"
-    echo "  status                   View status"
-    echo "  install [all|<module>]   Install a new module or run an existing one"
-    echo "  config                   Edit configuration"
-    echo "  self-update              Update fedoralaunch"
-    echo "  self-uninstall           Uninstall fedoralaunch"
-    echo "  doctor                   Check the system for common problems"
-    echo "  search <term>            Search for a module by name or description"
-    echo "  log                      View the log file"
-    echo "  version                  View the version of fedoralaunch"
-    echo "  help                     Show this help message"
+    echo "  list                         List available modules"
+    echo "  status                       View status"
+    echo "  install [all|<module>]       Install a new module or run an existing one"
+    echo "  config                       Edit configuration"
+    echo "  self-update                  Update fedoralaunch"
+    echo "  self-uninstall               Uninstall fedoralaunch"
+    echo "  doctor [--json]              Check the system for common problems"
+    echo "                               --json outputs machine-readable JSON"
+    echo "  search <term>                Search for a module by name or description"
+    echo "  log                          View the log file"
+    echo "  version                      View the version of fedoralaunch"
+    echo "  help                         Show this help message"
     echo
 }
 
@@ -67,6 +83,10 @@ run_module() {
 
     log_info "Running module: ${module_name}"
     source "$module_file"
+    if ! declare -f "$module_func" >/dev/null; then
+        log_error "Module '${module_name}' does not define ${module_func}()"
+        exit 1
+    fi    
     "$module_func"
     log_info "Module '${module_name}' executed."
 }
@@ -79,7 +99,7 @@ install_all_modules() {
         echo "$priority:$module"
     done | sort -n | while IFS=: read -r priority module; do
         module_name=$(basename "$module" .sh)
-        run_module "$module_name"
+        run_module "$module_name" || log_warning "Module $module_name failed"
     done
     
     echo
@@ -149,6 +169,23 @@ run_search() {
 run_doctor() {
     print_header "System Doctor"
 
+    log_section "Checking Dependencies"
+    missing_deps=()
+    for dep in git jq; do
+        if ! command -v "$dep" &>/dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+
+    if [ "${#missing_deps[@]}" -gt 0 ]; then
+        log_warning "Missing dependencies detected: ${missing_deps[*]}"
+        log_info "Installing missing dependencies..."
+        sudo dnf install -y "${missing_deps[@]}"
+        log_success "Dependencies installed."
+    else
+        log_success "All required dependencies are installed."
+    fi
+
     log_section "Checking Fedora Version"
     local current_version=$(rpm -E %fedora)
     local latest_version=$(curl -sL "https://fedoraproject.org/releases.json" | jq -r '.[0].version')
@@ -169,7 +206,7 @@ run_doctor() {
     log_info "Free memory: ${free_mem}"
 
     log_section "Checking for Broken Packages"
-    local broken_packages=$(sudo dnf check | grep "broken")
+    local broken_packages=$(sudo dnf check | grep broken || true)
     if [ -n "$broken_packages" ]; then
         log_warning "Your system has broken packages."
         log_info "Run 'sudo dnf check' for more information."
@@ -180,13 +217,68 @@ run_doctor() {
     print_footer "System check complete."
 }
 
+run_doctor_json() {
+    local current_version latest_version fedora_status
+    local free_disk free_mem broken_packages
+
+    current_version=$(rpm -E %fedora)
+
+    if command -v jq &>/dev/null; then
+        latest_version=$(curl -sL "https://fedoraproject.org/releases.json" | jq -r '.[0].version')
+        if [ "$current_version" -lt "$latest_version" ]; then
+            fedora_status="outdated"
+        else
+            fedora_status="latest"
+        fi
+    else
+        fedora_status="unknown"
+    fi
+
+    free_disk=$(df -h / | awk 'NR==2 {print $4}')
+    free_mem=$(free -h | awk 'NR==2 {print $7}')
+
+    broken_packages=$(sudo dnf check 2>/dev/null | grep broken || true)
+
+    jq -n \
+        --arg fedora_version "$current_version" \
+        --arg fedora_status "$fedora_status" \
+        --arg free_disk "$free_disk" \
+        --arg free_mem "$free_mem" \
+        --arg broken_packages "$broken_packages" \
+        '{
+            fedora: {
+                version: $fedora_version,
+                status: $fedora_status
+            },
+            system: {
+                free_disk: $free_disk,
+                free_memory: $free_mem
+            },
+            packages: {
+                broken: ($broken_packages != "")
+            }
+        }'
+}
+
+
 # ---
 # ## Main Execution
 # ---
 
 main() {
+    acquire_lock
+    trap release_lock EXIT
+
+    if [ ! -f /etc/fedora-release ]; then
+        log_error "This script is intended for Fedora Workstation only."
+        exit 1
+    fi
+
     init_logging
     load_config
+
+    : "${CONFIG_FILE:?CONFIG_FILE not set}"
+    : "${LOG_FILE:?LOG_FILE not set}"
 
     if [ $# -eq 0 ]; then
         show_banner
@@ -227,7 +319,11 @@ main() {
             uninstall
             ;;
         doctor)
-            run_doctor
+            if [ "$1" = "--json" ]; then
+                run_doctor_json
+            else
+                run_doctor
+            fi
             ;;
         search)
             if [ -n "$1" ]; then
